@@ -5,10 +5,13 @@ import About from "./components/About";
 
 function App() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-3xl font-bold text-blue-600">Hello, Tailwind CSS v4!</h1>
-    </div>
-    
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+      </Routes>
+    </Router>
   );
 }
 
