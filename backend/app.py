@@ -37,11 +37,9 @@ def detect():
 
             label = "maize" if cls == 0 else "weed"
 
-            detections.append({
-                "class": "maize" if cls == 0 else "weed",
-                "confidence": conf,
-                "bbox": [x1, y1, x2, y2]
-            })
+            detections.append(
+                {"class": label, "confidence": conf, "bbox": [x1, y1, x2, y2]}
+                )
 
     return jsonify({"detections": detections})
 
