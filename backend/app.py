@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from ultralytics import YOLO
 import cv2
 import numpy as np
@@ -7,7 +7,7 @@ import io
 
 app = Flask(__name__)
 
-# Load the YOLO model
+# Loading the YOLO model
 model = YOLO("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-weed-model.pt")  
 
 @app.route('/detect', methods=['POST'])
@@ -47,9 +47,11 @@ def detect():
             cv2.putText(image_cv, f"{label} {conf:.2f}", (x1, y1 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
             
-            
+    #save processed image
+    output_path = "output.jpg"
+    cv2.imwrite(output_path, image_cv)
 
-    return jsonify({"detections": detections})
+    return send_file(output_path, mimetype='image/jpeg')
 
 if __name__ == '__main__':
     app.run(debug=True)
