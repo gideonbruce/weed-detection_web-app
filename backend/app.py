@@ -8,10 +8,12 @@ import io
 app = Flask(__name__)
 
 # Load the YOLO model
-model = YOLO("backend/crop-weed.pt")  
+model = YOLO("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-weed-model.pt")  
 
 @app.route('/detect', methods=['POST'])
 def detect():
+    print("Recieved request:", request.files)
+    
     if 'image' not in request.files:
         return jsonify({"error": "No image provided"}), 400
 
