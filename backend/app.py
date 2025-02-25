@@ -13,12 +13,15 @@ model = YOLO("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-w
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)
-    
+
     if 'image' not in request.files:
         return jsonify({"error": "No image provided"}), 400
 
     file = request.files['image']
     image = Image.open(io.BytesIO(file.read()))  # Read image
+    image_cv = np.array(image)  # converting to opencv format
+    image_cv = cv2.cvtColor(image_cv, cv2.COLOR_RGB2BGR)
+
     results = model(image, imgsz=640)  # Run YOLO inference
 
     detections = []
@@ -27,6 +30,12 @@ def detect():
             cls = int(box.cls[0])  # Class index
             conf = float(box.conf[0])  # Confidence score
             x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box
+
+            #filtering low confidences
+            if conf < 0.5:
+                continue
+
+            label = "maize" if cls == 0 else "weed"
 
             detections.append({
                 "class": "maize" if cls == 0 else "weed",
