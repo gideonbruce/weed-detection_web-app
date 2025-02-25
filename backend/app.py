@@ -40,6 +40,14 @@ def detect():
             detections.append(
                 {"class": label, "confidence": conf, "bbox": [x1, y1, x2, y2]}
                 )
+            
+            # drawing bounding boxes
+            color = (0, 255, 0) if label == "maize" else (0, 0, 255)
+            cv2.rectangle(image_cv, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(image_cv, f"{label} {conf:.2f}", (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            
+            
 
     return jsonify({"detections": detections})
 
