@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Loading from "./Loading";
 
 const Home = () => {
   const [image, setImage] = useState(null);
@@ -44,22 +45,39 @@ const Home = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h2 className="text-2xl font-bold mb-4">Upload an Image</h2>
-      <input type="file" accept="image/*" onChange={handleFileChange} className="mb-4" />
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+      <div className="bg-white shadow-lg rounded-xl p-8 max-w-lg w-full">
+        <h2 className="text-3xl font-bold mb-6 text-center text-green-700">Weed Detection System</h2>
 
-      {preview && <img src={preview} alt="Preview" className="w-80 h-auto mb-4" />}
+        <label className="block w-full cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-lg text-center mb-4 transition">
+          <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+          Select an Image
+        </label>
 
-      <button onClick={handleUpload} disabled={loading} className="px-6 py-2 bg-blue-500 text-white rounded-lg">
-        {loading ? "Processing..." : "Upload & Detect"}
-      </button>
+        {preview && (
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Image Preview:</h3>
+            <img src={preview} alt="Preview" className="w-full h-auto rounded-lg shadow-md" />
+          </div>
+        )}
 
-      {processedImage && (
-        <div className="mt-6">
-          <h3>Processed Image:</h3>
-          <img src={processedImage} alt="Processed" className="w-80 h-auto border-2 border-green-500" />
-        </div>
-      )}
+        <button
+          onClick={handleUpload}
+          disabled={loading}
+          className={`w-full py-3 px-4 text-white rounded-lg transition ${
+            loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+          }`}
+        >
+          {loading ? <Loading /> : "Upload & Detect"}
+        </button>
+
+        {processedImage && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Processed Image:</h3>
+            <img src={processedImage} alt="Processed" className="w-full h-auto border-4 border-green-500 rounded-lg shadow-md" />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
