@@ -8,7 +8,7 @@ import io
 app = Flask(__name__)
 
 # Load the YOLO model
-model = YOLO("path/to/your/model.pt")  # Replace with your actual model path
+model = YOLO("backend/crop-weed.pt")  
 
 @app.route('/detect', methods=['POST'])
 def detect():
