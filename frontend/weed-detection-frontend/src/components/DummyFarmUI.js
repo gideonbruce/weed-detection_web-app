@@ -205,25 +205,37 @@ const DroneFarmMapping = () => {
     if (scannedArea) {
       drawScannedArea(ctx);
     }
+
+    // Draw weather effects
+    drawWeatherOverlay(ctx, width, height);
     
     // Draw weeds
     drawWeeds(ctx);
   };
   
   const drawFarmBackground = (ctx, width, height) => {
-    // Draw soil background
+    //  soil background
     ctx.fillStyle = '#b5651d';
     ctx.fillRect(0, 0, width, height);
     
-    // Draw crop rows
     ctx.fillStyle = '#567d46';
     for (let i = 0; i < farmDimensions.width; i += 2) {
       for (let j = 0; j < farmDimensions.height; j += 6) {
         ctx.fillRect(i * scale.x, j * scale.y, scale.x * 1.5, scale.y * 5);
       }
     }
+
+    //texture
+    ctx.fillStyle = '#a35c1a';
+    for (let i = 0; i < width; i += 4) {
+      for (let j = 0; j < height; j += 4) {
+        if (Math.random() > 0.8) {
+          ctx.fillRect(i, j, 2, 2);
+        }
+      }
+    }
     
-    // Draw grid lines (faint)
+    // grid lines 
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 0.5;
     
@@ -243,6 +255,11 @@ const DroneFarmMapping = () => {
       ctx.stroke();
     }
   };
+
+  // weather
+  const drawWeatherOverlay = (ctx, width, height) => {
+    ctx.save(); // appliying weather to canvas
+  }
   
   const drawFlightPath = (ctx) => {
     // Draw the polygon outline
