@@ -18,6 +18,15 @@ const DroneFarmMapping = () => {
     x: 8,
     y: 8
   };
+
+  const weatherEffects = {
+    clear: { detectModifier: 1.0, description: "Ideal conditions for detection", icon: "☀️"},
+    cloudy: { detectModifier: 0.9, description: "Slightly reduced visibility", icon: "☁️"},
+    lightRain: { detectModifier: 0.7, description: "Water droplets may interfere with sensors", icon: "🌦️"},
+    heavyRain: { detectModifier: 0.4, description: "Significant detection challenges", icon: "🌧️"},
+    windy: { detectModifier: 0.85, description: "Flight stability may be affected", icon: "💨"},
+    foggy: { detectModifier: 0.5, description: "Very limited visibility", icon: "🌫️"}
+  }
   
   useEffect(() => {
     generateRandomWeeds();

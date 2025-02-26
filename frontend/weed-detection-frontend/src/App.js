@@ -11,7 +11,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/farm" element={<DummyFarmUI />} />
+        <Route path="/farm" element={<farm />} />
       </Routes>
     </Router>
   );
