@@ -259,6 +259,30 @@ const DroneFarmMapping = () => {
   // weather
   const drawWeatherOverlay = (ctx, width, height) => {
     ctx.save(); // appliying weather to canvas
+
+    switch(weatherCondition) {
+      case 'cloudy':
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.1)';
+        ctx.fillRect(0, 0, width, height);
+        break;
+      case 'lightRain':
+        ctx.fillStyle = 'rgba(100, 150, 255, 0.05)';
+        ctx.fillRect(0, 0, width, height);
+        drawRain(ctx, width, height, 50);
+        break;
+      case 'heavyRain':
+          // Add darker blue tint and more raindrops
+        ctx.fillStyle = 'rgba(70, 120, 220, 0.15)';
+        ctx.fillRect(0, 0, width, height);
+        drawRain(ctx, width, height, 200);
+        break;
+      case 'foggy':
+        // Add white overlay
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.fillRect(0, 0, width, height);
+        break;
+
+    }
   }
   
   const drawFlightPath = (ctx) => {
