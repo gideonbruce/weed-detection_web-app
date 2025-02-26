@@ -458,6 +458,8 @@ const DroneFarmMapping = () => {
        ? weed.color
        : 'rgba(100, 100, 100, 0.3)'; // Undetected weeds are gray
 
+      const sizeMultiplier = 3 + weed.growthStage;
+
       ctx.beginPath();
       ctx.sizeMultiplier = 3 + weed.growthStage;
       ctx.arc(
@@ -575,14 +577,84 @@ const DroneFarmMapping = () => {
         }
       }
     };
-    
-    alert("Data exported to console");
-    console.log(JSON.stringify(data, null, 2));
+
+    //  blob and download link
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `farm-scan-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // Also save to localStorage
+    saveMissionToLocalStorage(data.mission);
   };
-  
+
+  const saveMissionToLocalStorage = (mission) => {
+    // Save to local storage
+    let updatedMissions = [...savedMissions];
+
+    // Update if exists, otherwise add
+    const existingIndex = updatedMissions.findIndex(m => m.id === mission.id);
+    if (existingIndex >= 0) {
+      updatedMissions[existingIndex] = mission;
+    } else {
+      updatedMissions.push(mission);
+    }
+
+    // Keep only the latest 10 missions
+    if (updatedMissions.length > 10) {
+      updatedMissions = updatedMissions.slice(-10);
+    }
+
+    setSavedMissions(updatedMissions);
+    localStorage.setItem('droneMissions', JSON.stringify(updatedMissions));
+    setCurrentMission(mission);
+  };
+
+  const loadMission = (mission) => {
+    setFlightPolygon(mission.flightPlan.polygon);
+    setDroneAltitude(mission.flightPlan.altitude);
+    setDroneSpeed(mission.flightPlan.speed || 5);
+    setWeatherCondition(mission.environment.weather || 'clear');
+    setWindSpeed(mission.environment.windSpeed || 0);
+    setCurrentMission(mission);
+
+    // Setting scanned area if it exists
+    if (mission.scanResult) {
+      setScannedArea({
+        polygon: mission.flightPlan.polygon,
+        timestamp: mission.scanResult.timestamp
+      });
+
+      // Converting stored detected weeds back to our format
+      if (mission.scanResult.detectedWeeds && mission.scanResult.detectedWeeds.length > 0) {
+        const convertedWeeds = mission.scanResult.detectedWeeds.map(weed => ({
+          id: weed.id,
+          x: parseFloat(weed.coordinates.x),
+          y: parseFloat(weed.coordinates.y),
+          size: parseFloat(weed.size),
+          type: weed.type,
+          growthStage: weed.growthStage || 0,
+          detectionConfidence: parseFloat(weed.detectionConfidence)
+        }));
+        setDetectableWeeds(convertedWeeds);
+      }
+    } else {
+      setScannedArea(null);
+    }
+  };
+
   const resetFlightPlan = () => {
     setFlightPolygon([]);
     setScannedArea(null);
+    setDetectableWeeds([]);
+    setCurrentMission([null]);
   };
   
   const simulateDroneFlight = () => {
@@ -596,6 +668,40 @@ const DroneFarmMapping = () => {
       polygon: flightPolygon,
       timestamp: new Date().toISOString()
     });
+
+    //  which weeds are detected
+    calculateDetectableWeeds();
+  };
+
+  const calculateFlightTime = () => {
+    if (flightPolygon.length < 3) return 0;
+    
+    //  area to be covered
+    const area = calculatePolygonArea(flightPolygon);
+
+    // perimeter
+    let perimeter = 0;
+    for (let i = 0; i < flightPolygon.length; i++) {
+      const p1 = flightPolygon[i];
+      const p2 = flightPolygon[(i + 1) % flightPolygon.length];
+      perimeter += Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+    }
+
+    // Estimate flight path length based on scan pattern (approximately)
+    const scanLineSpacing = 5; // 5m between scan lines
+    const scanLinesCount = Math.ceil(area / (perimeter * scanLineSpacing / 2));
+    const totalDistance = perimeter + (scanLinesCount * (perimeter / 2));
+
+    // Calculate time based on drone speed (add 10% for turns and other factors)
+    const timeInSeconds = (totalDistance / droneSpeed) * 1.1;
+
+    // Weather factor 
+    let weatherFactor = 1.0;
+    if (weatherCondition === 'lightRain') weatherFactor = 1.2;
+    if (weatherCondition === 'heavyRain') weatherFactor = 1.5;
+    if (weatherCondition === 'windy' && windSpeed > 15) weatherCondition = 1.3;
+
+    return Math.ceil((timeInSeconds * weatherFactor) / 60);
   };
   
   return (
