@@ -386,6 +386,41 @@ const DroneFarmMapping = () => {
       maxY = Math.max(maxY, point.y);
     });
 
+    // horizontal scan lines representing drone flight path.......
+    const spacing = 5; // 5m between scan lines
+    for (let y = Math.floor(minY / spacing) * spacing; y <= maxY; y += spacing) {
+      let intersections = [];
+
+      //  intersections with polygon edges
+      for (let i = 0; i < flightPolygon.length; i++) {
+        const p1 = flightPolygon[i];
+        const p2 = flightPolygon[(i + 1) % flightPolygon.length];
+
+        // Check if line segment crosses our horizontal line
+        if ((p1.y <= y && p2.y > y) || (p2.y <= y && p1.y > y)) {
+          // Calculate intersection x-coordinate
+          const x = p1.x + (y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+          intersections.push(x);
+        }
+      }
+
+      // Sort intersections
+      intersections.sort((a, b) => a - b);
+
+      // lines between pairs of intersections
+      for (let i = 0; i < intersections.length; i += 2) {
+        if (i + 1 < intersections.length) {
+          ctx.beginPath();
+          ctx.moveTo(intersections[i] * scale.x, y * scale.y);
+          ctx.lineTo(intersections[i + 1] * scale.x, y * scale.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    ctx.setLineDash([]);
+  };
+
 
   const drawScannedArea = (ctx) => {
     ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
@@ -407,21 +442,45 @@ const DroneFarmMapping = () => {
   
   const drawWeeds = (ctx) => {
     weeds.forEach(weed => {
-      // Check if weed is within scanned area
-      const isDetected = scannedArea ? isPointInPolygon({x: weed.x, y: weed.y}, scannedArea.polygon) : false;
+      // Find if this weed is actually detected
+      const detectedWeed = detectableWeeds.find(w => w.id === weed.id);
+      const isDetected = !!detectedWeed;
+
+      // Only show weeds in unscanned areas or detected weeds in scanned areas
+      const isVisible = !scannedArea || 
+                       !isPointInPolygon({x: weed.x, y: weed.y}, scannedArea.polygon) || 
+                       isDetected;
+          
+      if (!isVisible) return;
       
       // Draw weed
-      ctx.fillStyle = isDetected ? 'rgba(255, 50, 50, 0.8)' : 'rgba(255, 50, 50, 0.3)';
+      ctx.fillStyle = isDetected
+       ? weed.color
+       : 'rgba(100, 100, 100, 0.3)'; // Undetected weeds are gray
+
       ctx.beginPath();
-      ctx.arc(weed.x * scale.x, weed.y * scale.y, (weed.size * 4) + (isDetected ? 1 : 0), 0, Math.PI * 2);
+      ctx.sizeMultiplier = 3 + weed.growthStage;
+      ctx.arc(
+        weed.x * scale.x,
+        weed.y * scale.y,
+        weed.size * sizeMultiplier,
+        0,
+        Math.PI * 2
+      );
       ctx.fill();
       
-      // Draw detection confidence indicator for detected weeds
+      //  detection confidence indicator for detected weeds
       if (isDetected) {
         ctx.strokeStyle = 'yellow';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(weed.x * scale.x, weed.y * scale.y, weed.size * 8 * weed.detectionConfidence, 0, Math.PI * 2);
+        ctx.arc(
+          weed.x * scale.x,
+          weed.y * scale.y,
+          weed.size * 10 * detectedWeed.detectionConfidence,
+          0,
+          Math.PI * 2
+        );
         ctx.stroke();
       }
     });
@@ -442,12 +501,8 @@ const DroneFarmMapping = () => {
   };
   
   const findClickedWeed = (x, y) => {
-    // Only show detected weeds if there's a scanned area
-    const visibleWeeds = scannedArea 
-      ? weeds.filter(weed => isPointInPolygon({x: weed.x, y: weed.y}, scannedArea.polygon))
-      : weeds;
-      
-    return visibleWeeds.find(weed => {
+    // Only search detectable weeds
+    return detectableWeeds.find(weed => {
       const distance = Math.sqrt(Math.pow(weed.x - x, 2) + Math.pow(weed.y - y, 2));
       return distance <= weed.size;
     });
@@ -482,25 +537,42 @@ const DroneFarmMapping = () => {
   };
   
   const exportData = () => {
-    const detectedWeeds = scannedArea 
-      ? weeds.filter(weed => isPointInPolygon({x: weed.x, y: weed.y}, scannedArea.polygon))
-      : [];
-    
+    if (!scannedArea) {
+      alert("Please perform a drone scan first");
+      return;
+    }
+
     const data = {
       farmDimensions,
-      flightPlan: {
-        polygon: flightPolygon,
-        altitude: droneAltitude,
-      },
-      scanResult: {
-        timestamp: scannedArea?.timestamp || new Date().toISOString(),
-        detectedWeeds: detectedWeeds.map(weed => ({
-          id: weed.id,
-          coordinates: { x: weed.x.toFixed(2), y: weed.y.toFixed(2) },
-          type: weed.type,
-          size: weed.size.toFixed(2),
-          detectionConfidence: weed.detectionConfidence.toFixed(2)
-        }))
+      mission: {
+        id: currentMission ? currentMission.id : `mission-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        flightPlan: {
+          polygon: flightPolygon,
+          altitude: droneAltitude,
+          speed: droneSpeed
+        },
+        environment: {
+          weather: weatherCondition,
+          windSpeed: windSpeed,
+          detectionModifier: weatherEffects[weatherCondition].detectionModifier
+        },
+        timeEstimate: {
+          flightTimeMinutes: calculateFlightTime(),
+          area: calculatePolygonArea(flightPolygon),
+          scanEfficiency: weatherEffects[weatherCondition].detectionModifier
+        },
+        scanResult: {
+          timestamp: scannedArea.timestamp,
+          detectedWeeds: detectableWeeds.map(weed => ({
+            id: weed.id,
+            coordinates: { x: weed.x.toFixed(2), y: weed.y.toFixed(2) },
+            type: weed.type,
+            size: weed.size.toFixed(2),
+            growthStage: weed.growthStage,
+            detectionConfidence: weed.detectionConfidence.toFixed(2)
+          }))
+        }
       }
     };
     
