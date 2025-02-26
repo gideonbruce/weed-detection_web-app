@@ -4,10 +4,16 @@ const DroneFarmMapping = () => {
   const [weeds, setWeeds] = useState([]);
   const [flightPolygon, setFlightPolygon] = useState([]);
   const [droneAltitude, setDroneAltitude] = useState(10);
+  const [droneSpeed, setDroneSpeed] = useState(5); // m/s
   const [isDrawing, setIsDrawing] = useState(false);
   const [selectedWeed, setSelectedWeed] = useState(null);
   const [mapMode, setMapMode] = useState('view'); // 'view', 'draw', 'edit'
   const [scannedArea, setScannedArea] = useState(null);
+  const [weatherCondition, setWeatherCondition] = useState('clear');
+  const [windSpeed, setWindSpeed] = useState(0);
+  const [savedMissions, setSavedMissions] = useState([]);
+  const [currentMission, setCurrentMission] = useState(null);
+  const [detectableWeeds, setDetectableWeeds] = useState([]);
   const canvasRef = useRef(null);
   
   // Farm dimensions in meters
@@ -19,6 +25,10 @@ const DroneFarmMapping = () => {
     y: 8
   };
 
+  const weedTypes = [
+    { name: 'dandelion', color: '#FF5733', detectability: 0.9, growthRate: 0.5 },
+  ];
+
   const weatherEffects = {
     clear: { detectModifier: 1.0, description: "Ideal conditions for detection", icon: "☀️"},
     cloudy: { detectModifier: 0.9, description: "Slightly reduced visibility", icon: "☁️"},
@@ -26,7 +36,7 @@ const DroneFarmMapping = () => {
     heavyRain: { detectModifier: 0.4, description: "Significant detection challenges", icon: "🌧️"},
     windy: { detectModifier: 0.85, description: "Flight stability may be affected", icon: "💨"},
     foggy: { detectModifier: 0.5, description: "Very limited visibility", icon: "🌫️"}
-  }
+  };
   
   useEffect(() => {
     generateRandomWeeds();
