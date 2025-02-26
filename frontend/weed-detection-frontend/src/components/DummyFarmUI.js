@@ -132,25 +132,54 @@ const DroneFarmMapping = () => {
         detectionConfidence: 0
       });
     }
+
+    setWeeds(newWeeds);
+  };
+
+  const calculateDetectableWeeds = () => {
+    if (!scannedArea) return;
+
+    const weatherMod = weatherEffects[weatherCondition].detectionModifier;
+    const windMod = Math.max(0, 1 - (windSpeed / 50)); // Wind reduces detection at high speeds
+    const altitudeMod = Math.max(0.5, 1 - ((droneAltitude - 5) / 50));
+
+    const detected = weeds
+      .filter(weed => isPointInPolygon({x: weed.x, y: weed.y}, scannedArea.polygon))
+      .map(weed => {
+        // Calculate detection probability
+        const baseProbability = weed.detectability * weatherMod * windMod * altitudeMod;
+        // Adjust for growth stage - larger plants are easier to detect
+        const growthMod = 0.7 + (weed.growthStage * 0.075);
+        const detectionProbability = Math.min(1, baseProbability * growthMod);
+        
+        // Random component to simulate sensor variability
+        const randomFactor = 0.8 + Math.random() * 0.4;
+        const finalConfidence = Math.min(1, detectionProbability * randomFactor);
+
+        // Only return if the confidence is above threshold
+        if (finalConfidence > 0.3) {
+          return {
+            ...weed,
+            detectionConfidence: finalConfidence
+          };
+        }
+        return null;
+      })
+      .filter(weed => weed !== null);
+      
+    setDetectableWeeds(detected);
   };
   
   const startDrawPolygon = () => {
     setIsDrawing(true);
     setFlightPolygon([]);
     setMapMode('draw');
+    setScannedArea(null);
   };
   
   const finishDrawPolygon = () => {
     setIsDrawing(false);
     setMapMode('view');
-    
-    // Simulate scanned area
-    if (flightPolygon.length >= 3) {
-      setScannedArea({
-        polygon: flightPolygon,
-        timestamp: new Date().toISOString()
-      });
-    }
   };
   
   const drawMap = () => {
