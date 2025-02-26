@@ -281,9 +281,18 @@ const DroneFarmMapping = () => {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
         ctx.fillRect(0, 0, width, height);
         break;
+      case 'windy':
+        // Add slight motion blur effect
+        if (windSpeed > 10) {
+          ctx.filter = 'blur(1px)';
+          // We'll just add a wind indicator rather than actually blurring
+          drawWindIndicators(ctx, width, height);
+        }
+        break;
 
     }
-  }
+    ctx.restore();
+  };
   
   const drawFlightPath = (ctx) => {
     // Draw the polygon outline
