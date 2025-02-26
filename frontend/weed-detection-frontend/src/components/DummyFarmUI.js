@@ -16,10 +16,10 @@ const DroneFarmMapping = () => {
   const [detectableWeeds, setDetectableWeeds] = useState([]);
   const canvasRef = useRef(null);
   
-  // Farm dimensions in meters
+  //    in meters
   const farmDimensions = { width: 100, height: 80 };
   
-  // Scaling factors for display
+  // scaling factors for display
   const scale = {
     x: 8,
     y: 8
@@ -39,18 +39,48 @@ const DroneFarmMapping = () => {
   };
   
   useEffect(() => {
-    generateRandomWeeds();
+    generateRandomWeeds(150);
     drawMap();
+
+    const savedData = localStorage.getItem('droneMission');
+    if (savedData) {
+      try {
+        setSavedMissions(JSON.parse(savedData));
+      } catch (e) {
+        console.error("Failed to load saved missions", e);
+      }
+    }
   }, []);
 
   useEffect(() => {
     drawMap();
-  }, [weeds, flightPolygon, mapMode, scannedArea]);
+  /*}, [weeds, flightPolygon, mapMode, scannedArea]);*/
+    if (scannedArea) {
+      calculateDetectableWeeds();
+    }
+  }, [weeds, flightPolygon, mapMode, scannedArea, weatherCondition, windSpeed]);
 
-  const generateRandomWeeds = () => {
+  const generateRandomWeeds = (count = 100) => {
     const newWeeds = [];
-    // Generate 20-50 random weeds
-    const weedCount = 20 + Math.floor(Math.random() * 30);
+
+    // generate random distribution
+    const createCluster = (centerX, centerY, radius, count) => {
+      const clusterWeeds = [];
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * Math.random() * radius;
+
+        const x = centerX + Math.cos(angle) * dist;
+        const y = centerY + Math.sin(angle) * dist;
+
+        if (x >= 0 && x <= farmDimensions.width && y >= 0 && y <= farmDimensions.height) {
+          clusterWeeds.push({
+            x, y
+          });
+        }
+      }
+    }
+    return clusterWeeds;
     
     for (let i = 0; i < weedCount; i++) {
       newWeeds.push({
