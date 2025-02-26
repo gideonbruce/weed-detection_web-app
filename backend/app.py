@@ -32,7 +32,7 @@ def detect():
             conf = float(box.conf[0])  
             x1, y1, x2, y2 = map(int, box.xyxy[0]) 
 
-            if conf < 0.5:
+            if conf < 0.3:
                 continue
 
             label = "crop" if cls == 0 else "weed"
