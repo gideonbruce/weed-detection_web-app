@@ -293,6 +293,40 @@ const DroneFarmMapping = () => {
     }
     ctx.restore();
   };
+
+  const drawRain = (ctx, width, height, count) => {
+    ctx.strokeStyle = 'rgba(180, 220, 255, 0.7)';
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i < count; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const length = 5 + Math.random() * 10;
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 1, y + length);
+      ctx.stroke();
+    }
+  };
+
+  const drawWindIndicators = (ctx, width, height) => {
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 1;
+
+    const windDensity = Math.min(100, windSpeed * 5);
+    
+    for (let i = 0; i < windDensity; i++) {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      const length = 5 + Math.random() * (windSpeed / 2);
+
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + length, y);
+      ctx.stroke();
+    }
+  };
   
   const drawFlightPath = (ctx) => {
     // Draw the polygon outline
@@ -311,8 +345,13 @@ const DroneFarmMapping = () => {
       ctx.closePath();
     }
     ctx.stroke();
+
+    // flight pattern inside polygon (grid pattern representing flight lines)
+    if (flightPolygon.length > 2 && mapMode === 'view') {
+      drawFlightPattern(ctx);
+    }
     
-    // Draw the vertices
+    //  vertices
     ctx.fillStyle = 'blue';
     flightPolygon.forEach(point => {
       ctx.beginPath();
@@ -320,7 +359,7 @@ const DroneFarmMapping = () => {
       ctx.fill();
     });
     
-    // Draw altitude indicator
+    //  altitude indicator
     if (flightPolygon.length > 0) {
       const center = getCenterOfPolygon();
       
@@ -331,6 +370,23 @@ const DroneFarmMapping = () => {
     }
   };
   
+  const drawFlightPattern = (ctx) => {
+    if (flightPolygon.length < 3) return;
+    
+    ctx.strokeStyle = 'rgba(0, 120, 255, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 3]);
+
+    //  bounding box of polygon
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    flightPolygon.forEach(point => {
+      minX = Math.min(minX, point.x);
+      minY = Math.min(minY, point.y);
+      maxX = Math.max(maxX, point.x);
+      maxY = Math.max(maxY, point.y);
+    });
+
+
   const drawScannedArea = (ctx) => {
     ctx.fillStyle = 'rgba(0, 255, 0, 0.1)';
     ctx.strokeStyle = 'rgba(0, 255, 0, 0.6)';
