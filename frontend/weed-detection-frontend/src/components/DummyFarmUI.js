@@ -79,20 +79,59 @@ const DroneFarmMapping = () => {
           });
         }
       }
-    }
-    return clusterWeeds;
+      return clusterWeeds;
+    };
+
+    const clusterCount = 3 + Math.floor(Math.random() * 4);
+    const clusterPositions = [];
     
-    for (let i = 0; i < weedCount; i++) {
+    for (let i = 0; i < clusterCount; i++) {
+      clusterPositions.push({
+        x: 10 + Math.random() * (farmDimensions.width - 20),
+        y: 10 + Math.random() * (farmDimensions.height - 20),
+        radius: 5 + Math.random() * 15,
+        count: Math.floor(count / clusterCount * (0.7 + Math.random() * 0.6))
+      });
+    }
+    clusterPositions.forEach(cluster => {
+      const clusterWeeds = createCluster(cluster.x, cluster.y, cluster.radius, cluster.count);
+
+      clusterWeeds.forEach(weed => {
+        const randomType = weedTypes[Math.floor(Math.random() * weedTypes.length)];
+
+        newWeeds.push({
+          id: `weed-${newWeeds.length}`,
+          x: weed.x,
+          y: weed.y,
+          size: Math.random() * 0.8 + 0.2,
+          type: randomType.name,
+          color: randomType.color,
+          detectability: randomType.detectability * (0.9 + Math.random() * 0.2),
+          growthRate: randomType.growthRate * (0.9 + Math.random() * 0.2),
+          growthStage: Math.floor(Math.random() * 5),
+          detectionConfidence: 0
+        });
+      });
+    });
+
+    //random weeds
+    const isolatedCount = Math.floor(count * 0.2);
+    for (let i = 0; i < isolatedCount; i++) {
+      const randomType = weedTypes[Math.floor(Math.random() * weedTypes.length)];
+
       newWeeds.push({
-        id: `weed-${i}`,
+        id: `weed-${newWeeds.length}`,
         x: Math.random() * farmDimensions.width,
         y: Math.random() * farmDimensions.height,
         size: Math.random() * 0.8 + 0.2,
-        type: ['dandelion', 'thistle', 'nettle', 'ragweed', 'pigweed'][Math.floor(Math.random() * 5)],
-        detectionConfidence: Math.random() * 0.3 + 0.7 // 70-100% confidence
+        type: randomType.name,
+        color: randomType.color,
+        detectability: randomType.detectability * (0.9 + Math.random() * 0.2),
+        growthRate: randomType.growthRate * (0.9 + Math.random() * 0.2),
+        growthStage: Math.floor(Math.random() * 5),
+        detectionConfidence: 0
       });
     }
-    setWeeds(newWeeds);
   };
   
   const startDrawPolygon = () => {
