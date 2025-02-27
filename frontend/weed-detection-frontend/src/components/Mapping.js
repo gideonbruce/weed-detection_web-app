@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
+import { useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
@@ -86,10 +87,10 @@ const WeedDetectionMap = () => {
   };
 
   // Simulate drone movement and detection
-  const simulateDroneFlight = () => {
+  const simulateDroneFlight = useCallback(() => {
     if (!dronePosition || droneAreaPolygons.length === 0) return;
     
-    // Get first polygon for simulation
+    // first polygon for simulation
     const polygon = droneAreaPolygons[0];
     const bounds = L.latLngBounds(polygon);
     
@@ -104,7 +105,7 @@ const WeedDetectionMap = () => {
     if (Math.random() > 0.7) {
       addWeedDetection(lat, lng);
     }
-  };
+  }, [dronePosition, droneAreaPolygons]);
 
   // Map events component to handle map interactions
   const MapEvents = () => {
@@ -149,7 +150,7 @@ const WeedDetectionMap = () => {
       const interval = setInterval(simulateDroneFlight, 2000);
       return () => clearInterval(interval);
     }
-  }, [dronePosition, droneAreaPolygons]);
+  }, [dronePosition, droneAreaPolygons, simulateDroneFlight]);
 
   return (
     <div className="weed-detection-map-container">
