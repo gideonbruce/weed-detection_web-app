@@ -25,6 +25,29 @@ def get_db_connection():
         cursorclass=pymysql.cursors.DictCursor
     )
 
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+        user = cursor.fetchone()
+
+    connection.close()
+
+    if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+        token = jwt.encode(
+            {'email': user['email'], 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
+            app.config['SECRET_KEY'],
+            algorithm='HS256'
+        )
+        return jsonify({'token': token}), 200
+    else:
+        return jsonify({'message': 'Invalid credentials'}), 401
+
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)
