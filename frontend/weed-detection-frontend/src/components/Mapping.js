@@ -39,6 +39,7 @@ const WeedDetectionMap = () => {
   });
   const [dronePosition, setDronePosition] = useState(null);
   const [droneAreaPolygons, setDroneAreaPolygons] = useState([]);
+  const [isSimulating, setSimulating] = useState(false);
   
   const mapRef = useRef(null);
 
@@ -71,41 +72,67 @@ const WeedDetectionMap = () => {
     return () => clearInterval(weatherInterval);
   }, [center]);
 
-  // Add new weed detection
-  const addWeedDetection = (lat, lng) => {
+  // new weed detection
+  const addWeedDetection = async (lat, lng) => {
     const newDetection = {
-      id: Date.now(), // use timestamp as unique id
+      id: Date.now(), // using timestamp as unique id
       position: [lat, lng],
       timestamp: new Date().toISOString(),
       confidence: Math.round(70 + Math.random() * 30), // Simulated confidence score
+      imageUrl: `https://via.placeholder.com/150?text=Weed+Detected`,
     };
     
     setDetections(prev => [...prev, newDetection]);
-    
-    // Here you would also send this detection to your backend
-    console.log("New weed detected:", newDetection);
+
+    //    sending detections to backend
+    try {
+        const response = await fetch('http://127.0.0.1:5000/detections', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newDetection),
+        });
+
+        const result = await response.json();
+        console.log('Backend response:', result);
+    } catch (error) {
+        console.error('Error sending data to backend:', error);
+    }
   };
 
-  // Simulate drone movement and detection
+  // to simulate drone movement and detection
   const simulateDroneFlight = useCallback(() => {
     if (!dronePosition || droneAreaPolygons.length === 0) return;
     
+    setSimulating(true);
+
     // first polygon for simulation
     const polygon = droneAreaPolygons[0];
     const bounds = L.latLngBounds(polygon);
-    
-    // Random position within polygon bounds
-    const lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
-    const lng = bounds.getWest() + Math.random() * (bounds.getEast() - bounds.getWest());
-    
-    // Update drone position
-    setDronePosition([lat, lng]);
+
+    const moveDrone = () => {
+        if (!isSimulating) return;
+
+        // Random position within polygon bounds
+        const lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
+        const lng = bounds.getWest() + Math.random() * (bounds.getEast() - bounds.getWest());
+        
+        // Update drone position
+        setDronePosition([lat, lng]);
     
     // Occasionally detect a weed
-    if (Math.random() > 0.7) {
+    if (Math.random() > 0.6) {
       addWeedDetection(lat, lng);
     }
-  }, [dronePosition, droneAreaPolygons]);
+  };
+  
+  const interval = setInterval(moveDrone, 2000);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    setSimulating(false);
+  }, 30000);
+}, [dronePosition, droneAreaPolygons, addWeedDetection, isSimulating]);
+
 
   // Map events component to handle map interactions
   const MapEvents = () => {
@@ -126,10 +153,9 @@ const WeedDetectionMap = () => {
     
     if (layerType === 'polygon') {
       const newPolygon = layer.getLatLngs()[0].map(latlng => [latlng.lat, latlng.lng]);
-      setDroneAreaPolygons(prev => [...prev, newPolygon]);
+      setDroneAreaPolygons([newPolygon]);
       
       // If this is the first polygon, set drone at center
-      if (!dronePosition) {
         const center = layer.getBounds().getCenter();
         setDronePosition([center.lat, center.lng]);
       }
@@ -146,11 +172,12 @@ const WeedDetectionMap = () => {
 
   // Simulate drone movement when it has a position and a polygon
   useEffect(() => {
-    if (dronePosition && droneAreaPolygons.length > 0) {
-      const interval = setInterval(simulateDroneFlight, 2000);
-      return () => clearInterval(interval);
+    if (dronePosition && droneAreaPolygons.length > 0 && !isSimulating) {
+        simulateDroneFlight();
+      //const interval = setInterval(simulateDroneFlight, 2000);
+      //return () => clearInterval(interval);
     }
-  }, [dronePosition, droneAreaPolygons, simulateDroneFlight]);
+  }, [dronePosition, droneAreaPolygons, simulateDroneFlight, isSimulating]);
 
   return (
     <div className="weed-detection-map-container">
