@@ -11,6 +11,8 @@ CORS(app)
 
 model = YOLO("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-weed-model.pt")  
 
+#Database conn
+
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)

@@ -159,8 +159,8 @@ const WeedDetectionMap = () => {
         const center = layer.getBounds().getCenter();
         setDronePosition([center.lat, center.lng]);
       }
-    }
-  };
+    };
+  //};
 
   // Control drone altitude
   const changeAltitude = (change) => {
