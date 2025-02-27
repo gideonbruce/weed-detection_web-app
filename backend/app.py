@@ -5,6 +5,10 @@ import numpy as np
 from PIL import Image
 import io
 from flask_cors import CORS
+import pymysql
+import bcrypt
+import jwt
+import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -12,6 +16,14 @@ CORS(app)
 model = YOLO("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-weed-model.pt")  
 
 #Database conn
+def get_db_connection():
+    return pymysql.connect(
+        host='localhost',
+        user='your_mysql_user',
+        password='@Gideon',
+        database='weed_detection',
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
 @app.route('/detect', methods=['POST'])
 def detect():
