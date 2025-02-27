@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, FeatureGroup } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
 import { useCallback } from 'react';
 import L from 'leaflet';
@@ -184,19 +184,19 @@ const WeedDetectionMap = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
-        <EditControl
-          position="topright"
-          onCreated={onCreated}
-          draw={{
-            rectangle: false,
-            circle: false,
-            circlemarker: false,
-            marker: false,
-            polyline: false,
-          }}
-        />
-        
+        <FeatureGroup>
+          <EditControl
+            position="topright"
+            onCreated={onCreated}
+            draw={{
+                rectangle: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polyline: false,
+            }}
+            />
+        </FeatureGroup>
         {/* Display drone's current position */}
         {dronePosition && (
           <Marker 
