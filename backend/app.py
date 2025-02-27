@@ -15,6 +15,8 @@ CORS(app)
 
 model = YOLO("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-weed-model.pt")  
 
+app.config["SECRET_KEY"] = "dcdrdtrcsewsdcx"
+
 #Database conn
 def get_db_connection():
     return pymysql.connect(
