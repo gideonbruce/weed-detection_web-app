@@ -14,7 +14,7 @@ const App = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/" element={isAuthenticated() ? <Home /> : <Navigate to="/login" />} />
+        <Route path="/home" element={isAuthenticated() ? <Home /> : <Navigate to="/login" />} />
         <Route path="/about" element={<About />} />
         <Route path="/dummy-farm-ui" element={<DummyFarmUI />} />  
         <Route path="/farm" element={<Mapping />} />

@@ -2,6 +2,7 @@ import { useState } from "react";
 import Loading from "./Loading";
 
 const Home = () => {
+  
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [processedImage, setProcessedImage] = useState(null);

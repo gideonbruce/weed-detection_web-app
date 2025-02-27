@@ -19,9 +19,9 @@ model = YOLO("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-w
 def get_db_connection():
     return pymysql.connect(
         host='localhost',
-        user='your_mysql_user',
+        user='root',
         password='@Gideon',
-        database='weed_detection',
+        database='react',
         cursorclass=pymysql.cursors.DictCursor
     )
 
