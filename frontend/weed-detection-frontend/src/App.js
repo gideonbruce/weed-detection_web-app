@@ -4,11 +4,13 @@ import Home from "./components/Home";
 import About from "./components/About";
 import DummyFarmUI from "./components/DummyFarmUI";
 import Mapping from "./components/Mapping";
+import Login from "./pages/Login";
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/dummy-farm-ui" element={<DummyFarmUI />} />  

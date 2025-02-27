@@ -48,6 +48,25 @@ def login():
     else:
         return jsonify({'message': 'Invalid credentials'}), 401
 
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    # Hash the password
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
+
+    try:
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("INSERT INTO users (email, password_hash) VALUES (%s, %s)", (email, hashed_password))
+            connection.commit()
+        connection.close()
+        return jsonify({'message': 'User registered successfully'}), 201
+    except pymysql.err.IntegrityError:
+        return jsonify({'message': 'Email already exists'}), 400
+
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)
