@@ -113,6 +113,23 @@ def forgot_password():
 @app.route('/store_detections', methods=['POST'])
 def store_detections():
     try:
+        data = request.json
+
+        for detection in data:
+            sql = "INSERT INTO react (id, latitude, longitude, timestamp, confidence) VALUES (%s,%s,%s,%s,%s)"
+            values = (
+                detection['id'],
+                detection['latitude'],
+                detection['longitude'],
+                datetime.strptime(detection['timestamp'], "%Y-%m-%dT%H:%M:%S.%fZ"),
+                detection['confidence']
+            )
+            cursor.execute(sql, values)
+        db.commit()
+        return jsonify({"message": "Detections stored successfully!"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/detect', methods=['POST'])
 def detect():
