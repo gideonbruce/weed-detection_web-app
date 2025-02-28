@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+
 //import Navbar from "./components/Navbar";
 import Home from "./components/Home";
 import About from "./components/About";
@@ -10,6 +11,7 @@ import { isAuthenticated } from "./utils/auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import WeedDetectionsTable from "./components/WeedDetectionsTable";
+import TreatmentPlanning from "./components/TreatmentPlanning";
 
 const App = () => {
   return (
@@ -24,6 +26,7 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/weeds-detected" element={<WeedDetectionsTable />} />
+        <Route path="/treatment-planning" element={<TreatmentPlanning />} /> 
       </Routes>
     </Router>
   );
