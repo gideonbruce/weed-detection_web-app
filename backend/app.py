@@ -109,7 +109,10 @@ def forgot_password():
         
     return jsonify({"message": "Password reset link sent"}), 200
 
-
+# api route to store json data in mysqldb
+@app.route('/store_detections', methods=['POST'])
+def store_detections():
+    try:
 
 @app.route('/detect', methods=['POST'])
 def detect():
