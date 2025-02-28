@@ -76,7 +76,29 @@ const WeedDetectionMap = () => {
     return () => clearInterval(weatherInterval);
   }, [center]);
 
-  // new func to update or create heatmap
+  // new func to create heatmap
+  const updateHeatmap = useCallback(() => {
+    if (!mapRef.current || detections.length === 0) return;
+
+    const heatPoints = detections.map(detection => [
+      detection.position[0],
+      detection.position[1],
+      detection.confidence / 100
+    ]);
+
+    if (heatmapRef.current) {
+      mapRef.current.removeLayer(heatmapRef.current);
+    }
+
+    const newHeatmapLayer = L.heatLayer(heatPoints, {
+      radius: 25,
+      blur: 15,
+      maxZoom: 17,
+      gradient: { 0.4: 'blue', 0.65: 'lime', 0.8: 'yellow', 1.0: 'red' }
+    });
+
+    ##
+  })
 
   // new weed detection
   const addWeedDetection = async (lat, lng) => {
