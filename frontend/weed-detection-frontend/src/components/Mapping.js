@@ -178,7 +178,14 @@ const WeedDetectionMap = () => {
     const polygon = droneAreaPolygons[0];
     const bounds = L.latLngBounds(polygon);
 
-    //
+    // systematic grid-based flight pattern
+    const gridSize = 0.0005; // approx 50m at equator
+    const rows = Math.ceil((bounds.getNorth() - bounds.getSouth()) / gridSize);
+    const cols = Math.ceil((bounds.getEast() - bounds.getWest()) / gridSize);
+
+    let currentRow = 0;
+    let currentCol = 0;
+    let direction = 1; // 1 for right, -1 for left
 
     const moveDrone = () => {
         if (!isSimulating) return;
