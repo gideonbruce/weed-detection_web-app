@@ -97,8 +97,17 @@ const WeedDetectionMap = () => {
       gradient: { 0.4: 'blue', 0.65: 'lime', 0.8: 'yellow', 1.0: 'red' }
     });
 
-    ##
-  })
+    if (showHeatmap) {
+      newHeatmapLayer.addTo(mapRef.current);
+    }
+
+    heatmapRef.current = newHeatmapLayer;
+    setHeatmapLayer(newHeatmapLayer);
+  }, [detections, showHeatmap]);
+
+  useEffect(() => {
+    updateHeatmap();
+  }, [detections, showHeatmap, updateHeatmap]);
 
   // new weed detection
   const addWeedDetection = async (lat, lng) => {
