@@ -119,8 +119,30 @@ const WeedDetectionMap = () => {
     setShowHeatmap(!showHeatmap);
   };
 
+  const exportDetectionsToJSON = () => {
+    const detectionsData = detections.map(detection => ({
+      id: detection.id,
+      latitude: detection.position[0],
+      longitude: detection.position[1],
+      timestamp: detection.timestamp,
+      confidence: detection.confidence
+    }));
+
+    const jsonData = JSON.stringify(detectionsData, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `weed-detections-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   // new weed detection
-  const addWeedDetection = async (lat, lng) => {
+  const addWeedDetection = useCallback(async (lat, lng) => {
     const newDetection = {
       id: Date.now(), // using timestamp as unique id
       position: [lat, lng],
@@ -144,7 +166,7 @@ const WeedDetectionMap = () => {
     } catch (error) {
         console.error('Error sending data to backend:', error);
     }
-  };
+  }, [setDetections]);
 
   // to simulate drone movement and detection
   const simulateDroneFlight = useCallback(() => {
@@ -155,6 +177,8 @@ const WeedDetectionMap = () => {
     // first polygon for simulation
     const polygon = droneAreaPolygons[0];
     const bounds = L.latLngBounds(polygon);
+
+    //
 
     const moveDrone = () => {
         if (!isSimulating) return;
