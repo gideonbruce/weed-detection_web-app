@@ -9,6 +9,7 @@ import Signup from "./pages/Signup";
 import { isAuthenticated } from "./utils/auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import WeedDetectionsTable from "./components/WeedDetectionsTable";
 
 const App = () => {
   return (
@@ -22,6 +23,7 @@ const App = () => {
         <Route path="/farm" element={<Mapping />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/weeds-detected" element={<WeedDetectionsTable />} />
       </Routes>
     </Router>
   );

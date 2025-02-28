@@ -8,7 +8,7 @@ from flask_cors import CORS
 import pymysql
 import bcrypt
 import jwt
-import datetime
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -114,9 +114,16 @@ def forgot_password():
 def store_detections():
     try:
         data = request.json
+        print("Received data:", data)
+
+        #if not isinstance(data, dict): # checking if its a list
+            #data = [data]
+            
+        connection = get_db_connection()
+        cursor = connection.cursor()
 
         for detection in data:
-            sql = "INSERT INTO react (id, latitude, longitude, timestamp, confidence) VALUES (%s,%s,%s,%s,%s)"
+            sql = "INSERT INTO weed_detections (id, latitude, longitude, timestamp, confidence) VALUES (%s,%s,%s,%s,%s)"
             values = (
                 detection['id'],
                 detection['latitude'],
@@ -125,11 +132,34 @@ def store_detections():
                 detection['confidence']
             )
             cursor.execute(sql, values)
-        db.commit()
-        return jsonify({"message": "Detections stored successfully!"}), 201
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return jsonify({"message": f"Successfully stored {len(data)} detections!"}), 201
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("Error:", str(e))
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
+@app.route('/get_detections', methods=['GET'])
+def get_detections():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT id, latitude, longitude, timestamp FROM weed_detections")
+        detections = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+
+        return jsonify(detections), 200
+    
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
 @app.route('/detect', methods=['POST'])
 def detect():

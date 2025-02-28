@@ -27,7 +27,7 @@ const weedIcon = L.icon({
   popupAnchor: [0, -32],
 });
 
-const WeedDetectionMap = () => {
+const WeedDetectionMap = ({ onDetectionsUpdate }) => {
   const [center, setCenter] = useState([-0.68885, 34.78321]); 
   const [zoom, setZoom] = useState(16);
   const [detections, setDetections] = useState([]);
@@ -64,6 +64,13 @@ const WeedDetectionMap = () => {
       console.error("Error fetching weather data:", error);
     }
   };
+
+
+  useEffect(() => {
+    if (onDetectionsUpdate && typeof onDetectionsUpdate === 'function') {
+      onDetectionsUpdate(detections);
+    }
+  }, [detections, onDetectionsUpdate]);
 
   // Initialize and fetch weather
   useEffect(() => {
@@ -121,12 +128,17 @@ const WeedDetectionMap = () => {
   };
 
   const exportDetectionsToJSON = useCallback(() => {
+    if (!detections || detections.length === 0) {
+      console.error("No detections available for export.");
+      return;
+    }
+
     const detectionsData = detections.map(detection => ({
       id: detection.id,
-      latitude: detection.position[0],
-      longitude: detection.position[1],
-      timestamp: detection.timestamp,
-      confidence: detection.confidence
+      latitude: detection.position ? detection.position[0] : null,
+      longitude: detection.position ? detection.position[1] : null,
+      timestamp: detection.timestamp || new Date().toISOString(),
+      confidence: detection.confidence || 0,
     }));
 
     const jsonData = JSON.stringify(detectionsData, null, 2);
@@ -144,11 +156,18 @@ const WeedDetectionMap = () => {
 
   // new weed detection
   const addWeedDetection = useCallback(async (lat, lng) => {
+    if (lat == null || lng == null) {
+      console.error("Invalid latitude or longitude recieved.");
+      return;
+    }
+
     const newDetection = {
       id: Date.now(), // using timestamp as unique id
       position: [lat, lng],
-      timestamp: new Date().toISOString(),
+      latitude: lat,
+      longitude: lng,
       confidence: Math.round(70 + Math.random() * 30), // Simulated confidence score
+      timestamp: new Date().toISOString(),
       imageUrl: `https://via.placeholder.com/150?text=Weed+Detected`,
     };
     
@@ -156,10 +175,10 @@ const WeedDetectionMap = () => {
 
     //    sending detections to backend
     try {
-        const response = await fetch('http://127.0.0.1:5000/detections', {
+        const response = await fetch('http://127.0.0.1:5000/store_detections', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newDetection),
+            body: JSON.stringify([newDetection]),
         });
 
         const result = await response.json();
@@ -239,8 +258,6 @@ const WeedDetectionMap = () => {
           clearInterval(interval);
           simulationRunningRef.current = false;
           setSimulating(false);
-          exportDetectionsToJSON();
-
           exportDetectionsToJSON();
         }
       };
