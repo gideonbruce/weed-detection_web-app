@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
+import 'leaflet.heat';
 
 
 // Import custom weed icon
@@ -167,11 +168,14 @@ const WeedDetectionMap = () => {
         console.error('Error sending data to backend:', error);
     }
   }, [setDetections]);
-
+  
+  const simulationRunningRef = useRef(false);
   // to simulate drone movement and detection
   const simulateDroneFlight = useCallback(() => {
     if (!dronePosition || droneAreaPolygons.length === 0) return;
     
+    //setSimulating(true);
+    simulationRunningRef.current = true;
     setSimulating(true);
 
     // first polygon for simulation
@@ -188,28 +192,66 @@ const WeedDetectionMap = () => {
     let direction = 1; // 1 for right, -1 for left
 
     const moveDrone = () => {
-        if (!isSimulating) return;
+        if (!simulationRunningRef.current) return;
 
-        // Random position within polygon bounds
-        const lat = bounds.getSouth() + Math.random() * (bounds.getNorth() - bounds.getSouth());
-        const lng = bounds.getWest() + Math.random() * (bounds.getEast() - bounds.getWest());
+        // Random position within polygon bounds based on grid
+        const lat = bounds.getSouth() + (currentRow * gridSize);
+        const lng = bounds.getWest() + (currentCol * gridSize);
         
         // Update drone position
         setDronePosition([lat, lng]);
-    
-    // Occasionally detect a weed
-    if (Math.random() > 0.6) {
-      addWeedDetection(lat, lng);
-    }
-  };
-  
-  const interval = setInterval(moveDrone, 2000);
 
-  setTimeout(() => {
-    clearInterval(interval);
-    setSimulating(false);
-  }, 30000);
-}, [dronePosition, droneAreaPolygons, addWeedDetection, isSimulating]);
+        const distanceToEdge = Math.min(
+          lat - bounds.getSouth(),
+          bounds.getNorth() - lat,
+          lng - bounds.getWest(),
+          bounds.getEast() - lng
+        ) / gridSize;
+
+        const detectionProbability = 0.3 + (1 / (distanceToEdge + 1)) * 0.4;
+
+        if (Math.random() < detectionProbability) {
+          const jitter = gridSize * 0.3;
+          const jitteredLat = lat + (Math.random() * jitter * 2 - jitter);
+          const jitteredLng = lng + (Math.random() * jitter * 2 - jitter);
+          addWeedDetection(jitteredLat, jitteredLng);
+        }
+
+        // move to another position in serpentine pattern
+        if (direction === 1) {
+          if (currentCol < cols - 1) {
+            currentCol++;
+          } else {
+            currentRow++;
+            direction = -1;
+          }
+        } else {
+          if (currentCol > 0) {
+            currentCol--;
+          } else {
+            currentRow++;
+            direction = 1;
+          }
+        }
+
+        //checking if entere area is covered
+        if (currentRow >= rows) {
+          clearInterval(interval);
+          simulationRunningRef.current = false;
+          setSimulating(false);
+          exportDetectionsToJSON();
+
+          exportDetectionsToJSON();
+        }
+      };
+  
+    const interval = setInterval(moveDrone, 500);
+
+    return () => {
+      //clearInterval(interval);
+      //setSimulating(false);
+    };
+  }, [dronePosition, droneAreaPolygons, addWeedDetection, exportDetectionsToJSON ]);
 
 
   // Map events component to handle map interactions
@@ -248,6 +290,16 @@ const WeedDetectionMap = () => {
     });
   };
 
+  // start drone sim
+  const startSimulation = () => {
+    if (dronePosition && droneAreaPolygons.length > 0 && !isSimulating) {
+      setDetections([]);
+      simulateDroneFlight();
+    } else if (!dronePosition || droneAreaPolygons.length === 0) {
+      alert("Please draw a polygon area first");
+    }
+  };
+/*
   // Simulate drone movement when it has a position and a polygon
   useEffect(() => {
     if (dronePosition && droneAreaPolygons.length > 0 && !isSimulating) {
@@ -255,7 +307,7 @@ const WeedDetectionMap = () => {
       //const interval = setInterval(simulateDroneFlight, 2000);
       //return () => clearInterval(interval);
     }
-  }, [dronePosition, droneAreaPolygons, simulateDroneFlight, isSimulating]);
+  }, [dronePosition, droneAreaPolygons, simulateDroneFlight, isSimulating]);*/
 
   return (
     <div className="weed-detection-map-container">
@@ -276,6 +328,23 @@ const WeedDetectionMap = () => {
           
           <h3>Weed Detections</h3>
           <p>Total detected: {detections.length}</p>
+
+          <div className='action-buttons'>
+            <button
+            onClick={startSimulation}
+            disabled={isSimulating || !dronePosition || droneAreaPolygons.length === 0}
+            >
+              {isSimulating ? 'Simulating...' : 'Start Simulation'}
+            </button>
+            <button onClick={toggleHeatmap}>
+              {showHeatmap ? 'Hide Heatmap' : 'Show Heatmap'}
+            </button>
+            <button onClick={exportDetectionsToJSON}
+            disabled={detections.length === 0}
+            >
+              Export Detections to JSON
+            </button>
+          </div>
         </div>
       </div>
       
@@ -318,6 +387,7 @@ const WeedDetectionMap = () => {
                 <p>Altitude: {droneAltitude}m</p>
                 <p>Lat: {dronePosition[0].toFixed(6)}</p>
                 <p>Lng: {dronePosition[1].toFixed(6)}</p>
+                <p>Status: {isSimulating ? 'Flying' : 'Idle'}</p>
               </div>
             </Popup>
           </Marker>
@@ -341,14 +411,7 @@ const WeedDetectionMap = () => {
             </Popup>
           </Marker>
         ))}
-        
-        {/* Display drone coverage polygons */}
-        {droneAreaPolygons.map((polygon, index) => (
-          <React.Fragment key={index}>
-            {/* Using a polygon component here */}
-          </React.Fragment>
-        ))}
-        
+
         <MapEvents />
       </MapContainer>
       
@@ -356,8 +419,11 @@ const WeedDetectionMap = () => {
         <h3>Instructions</h3>
         <ul>
           <li>Use the polygon tool to draw drone coverage areas</li>
-          <li>Ctrl+Click on map to manually add a weed detection (for testing)</li>
-          <li>Drone will automatically move and detect weeds in defined areas</li>
+          <li>Click "Start Simulation" to begin drone flight</li>
+          <li>Drone will systematically cover the area and detect weeds</li>
+          <li>Toggle the heatmap to visualize weed density</li>
+          <li>Ctrl+Click on map to manually add a weed detection (testing 123)</li>
+          <li>Click "Export Detections to JSON" to save detected weed coordinates</li>
         </ul>
       </div>
       
@@ -385,6 +451,31 @@ const WeedDetectionMap = () => {
           display: flex;
           gap: 10px;
           margin: 10px 0;
+        }
+
+        .action-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 15px;
+        }
+
+        .action-buttons button {
+          padding: 8px 12px;
+          background: #4CAF50;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        .action-buttons button:disabled {
+          background: #cccccc;
+          cursor: not-allowed;
+        }
+
+        .actions-buttons button:hover:not(:disabled) {
+          background: #45a049;
         }
         
         .map-instructions {
