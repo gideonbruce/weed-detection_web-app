@@ -109,6 +109,16 @@ const WeedDetectionMap = () => {
     updateHeatmap();
   }, [detections, showHeatmap, updateHeatmap]);
 
+  // to toggle heat map visibility
+  const toggleHeatmap = () => {
+    if (showHeatmap && heatmapRef.current) {
+      mapRef.current.removeLayer(heatmapRef.current);
+    } else if (!showHeatmap && heatmapRef.current) {
+      heatmapRef.current.addTo(mapRef.current);
+    }
+    setShowHeatmap(!showHeatmap);
+  };
+
   // new weed detection
   const addWeedDetection = async (lat, lng) => {
     const newDetection = {
