@@ -120,7 +120,7 @@ const WeedDetectionMap = () => {
     setShowHeatmap(!showHeatmap);
   };
 
-  const exportDetectionsToJSON = () => {
+  const exportDetectionsToJSON = useCallback(() => {
     const detectionsData = detections.map(detection => ({
       id: detection.id,
       latitude: detection.position[0],
@@ -140,7 +140,7 @@ const WeedDetectionMap = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }
+  }, [detections]);
 
   // new weed detection
   const addWeedDetection = useCallback(async (lat, lng) => {

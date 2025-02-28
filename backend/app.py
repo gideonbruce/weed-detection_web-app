@@ -109,6 +109,8 @@ def forgot_password():
         
     return jsonify({"message": "Password reset link sent"}), 200
 
+
+
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)
