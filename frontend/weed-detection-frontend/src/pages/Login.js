@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -22,7 +22,7 @@ const Login = () => {
 
             if (response.ok) {
                 localStorage.setItem('token', data.token);
-                navigate('/'); // Redirect to homepage
+                navigate('/home'); // Redirect to homepage
             } else {
                 setError(data.message || 'Login failed');
             }
@@ -66,6 +66,9 @@ const Login = () => {
                         Login
                     </button>
                 </form>
+                <p>
+                    <Link to="/forgot-password">Forgot Password?</Link>
+                </p>
                 <p className="text-sm text-center text-gray-600">
                     Don't have an account?{' '}
                     <a href="/signup" className="text-blue-600 hover:underline">

@@ -69,6 +69,46 @@ def signup():
     except pymysql.err.IntegrityError:
         return jsonify({'message': 'Email already exists'}), 400
 
+@app.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"message": "Email not found"}), 400
+    
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
+        user = cursor.fetchone()
+
+    connection.close()
+
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    #generates reset token valid for 2 minutes
+    token = jwt.encode(
+        {"email": email, "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=2)},
+        app.config["SECRET_KEY"],
+        algorithm="hs256",
+    )
+
+    reset_link = f"http://localhost:3000/reset-password?token={token}"
+
+    #send email
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login("email@gmail.com", emailpassword)
+        message = f"Subject: Password reset\n\nClick here to reset your password: {reset_link}"
+        server.sendmail("email@gmail.com", email, message)
+        server.quit()
+    except:
+        return jsonify({"message": "Failed to send email"}), 500
+        
+    return jsonify({"message": "Password reset link sent"}), 200
+
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)

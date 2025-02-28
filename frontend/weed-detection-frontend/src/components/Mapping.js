@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 
+
 // Import custom weed icon
 import weedIconImg from './assets/weed-icon.png';
 
@@ -26,10 +27,10 @@ const weedIcon = L.icon({
 });
 
 const WeedDetectionMap = () => {
-  const [center, setCenter] = useState([-0.68893, 34.7811]); 
+  const [center, setCenter] = useState([-0.68885, 34.78321]); 
   const [zoom, setZoom] = useState(16);
   const [detections, setDetections] = useState([]);
-  const [droneAltitude, setDroneAltitude] = useState(50); // meters
+  const [droneAltitude, setDroneAltitude] = useState(10); // meters
   const [weather, setWeather] = useState({
     temperature: 0,
     humidity: 0,
@@ -40,8 +41,11 @@ const WeedDetectionMap = () => {
   const [dronePosition, setDronePosition] = useState(null);
   const [droneAreaPolygons, setDroneAreaPolygons] = useState([]);
   const [isSimulating, setSimulating] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(true);
+  const [heatmapLayer, setHeatmapLayer] = useState(null);
   
   const mapRef = useRef(null);
+  const heatmapRef = useRef(null);
 
   // Simulated function to get weather data
   const fetchWeatherData = async (lat, lng) => {
@@ -71,6 +75,8 @@ const WeedDetectionMap = () => {
     
     return () => clearInterval(weatherInterval);
   }, [center]);
+
+  // new func to update or create heatmap
 
   // new weed detection
   const addWeedDetection = async (lat, lng) => {

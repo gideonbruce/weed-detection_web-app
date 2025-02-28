@@ -7,6 +7,8 @@ import Mapping from "./components/Mapping";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import { isAuthenticated } from "./utils/auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const App = () => {
   return (
@@ -18,6 +20,8 @@ const App = () => {
         <Route path="/about" element={<About />} />
         <Route path="/dummy-farm-ui" element={<DummyFarmUI />} />  
         <Route path="/farm" element={<Mapping />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
     </Router>
   );
