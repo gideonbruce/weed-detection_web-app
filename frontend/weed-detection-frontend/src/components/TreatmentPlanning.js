@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -58,6 +58,7 @@ const TreatmentPlanning = () => {
         
         // For development/demo purposes - create mock data if backend is not available
         const mockData = generateMockData();
+        console.log(mockData);
         setWeedDetections(mockData);
         calculateTreatmentStats(mockData, selectedTreatment);
       } finally {
@@ -91,16 +92,8 @@ const TreatmentPlanning = () => {
     return mockData;
   };
 
-  // Effect to recalculate treatment plans when treatment method or weed data changes
-  useEffect(() => {
-    if (weedDetections.length > 0) {
-      generateTreatmentPlan(selectedTreatment);
-      calculateTreatmentStats(weedDetections, selectedTreatment);
-    }
-  }, [selectedTreatment, weedDetections]);
-
   // Generate treatment plan based on weed detections and selected method
-  const generateTreatmentPlan = (treatmentMethod) => {
+  const generateTreatmentPlan = useCallback((treatmentMethod) => {
     if (weedDetections.length === 0) return;
     
     let areas = [];
@@ -152,10 +145,10 @@ const TreatmentPlanning = () => {
     };
     
     setCurrentTreatmentPlan(plan);
-  };
+  }, [weedDetections, setTreatmentAreas, setCurrentTreatmentPlan, createTreatmentZones]);
 
   // Calculate treatment statistics
-  const calculateTreatmentStats = (weeds, method) => {
+  const calculateTreatmentStats = useCallback((weeds, method) => {
     if (!weeds || weeds.length === 0) {
       setTreatmentStats({
         totalWeeds: 0,
@@ -200,6 +193,12 @@ const TreatmentPlanning = () => {
         timeRequired = Math.sqrt(area) * 0.5; // Rough estimate based on area size
         costEstimate = 30 + (chemicalUsage * 10) + (timeRequired / 60 * 30); // Base cost + chemical cost + labor cost
         break;
+
+      default:
+        console.warn(`Unknown method: ${method}`);
+        chemicalUsage = 0;
+        timeRequired = 0;
+        costEstimate = 0;
     }
     
     setTreatmentStats({
@@ -209,10 +208,19 @@ const TreatmentPlanning = () => {
       estimatedTimeRequired: Math.round(timeRequired),
       costEstimate: Math.round(costEstimate)
     });
-  };
+  }, [setTreatmentStats, createTreatmentZones, calculateTotalArea]);
+
+  // Effect to recalculate treatment plans when treatment method or weed data changes
+  useEffect(() => {
+    if (weedDetections.length > 0) {
+      generateTreatmentPlan(selectedTreatment);
+      calculateTreatmentStats(weedDetections, selectedTreatment);
+    }
+  }, [selectedTreatment, weedDetections, generateTreatmentPlan, calculateTreatmentStats]);
+
 
   // Helper functions
-  const createTreatmentZones = (weeds) => {
+  const createTreatmentZones = useCallback((weeds) => {
     // Simple clustering algorithm - group weeds that are within 10 meters of each other
     const zones = [];
     const processed = new Set();
@@ -271,7 +279,7 @@ const TreatmentPlanning = () => {
     }
     
     return zones;
-  };
+  }, [calculateDistance, calculateConvexHull, calculateBounds, expandBounds, getRecommendedHerbicide]);
   
   // Calculate distance between two points using Haversine formula
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -533,7 +541,7 @@ const TreatmentPlanning = () => {
             
             {/* Display treatment areas based on treatment type */}
             {treatmentAreas.map((area, index) => {
-              if (area.type === 'broadcast' || area.type === 'zone' && area.bounds) {
+              if (area.type === 'broadcast' || (area.type === 'zone' && area.bounds)) {
                 // For broadcast or zone with bounds, display rectangle
                 const corners = [
                   [area.bounds.southWest[0], area.bounds.southWest[1]],
