@@ -3,8 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polygon } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Link } from 'react-router-dom';
-import weedIconImg from '../assets/weed-icon.png'; // Reusing your weed icon
-import '../styles/TreatmentPlanning.css'; // You'll need to create this CSS file
+import weedIconImg from './components/assets/weed-icon.png'; // Reusing your weed icon
 
 // Custom weed icon (reused from your WeedDetectionMap component)
 const weedIcon = L.icon({
@@ -48,6 +47,7 @@ const TreatmentPlanning = () => {
         // If we have detections, center the map on the first one
         if (data.length > 0) {
           setCenterPosition([data[0].latitude, data[0].longitude]);
+          setZoom(17);
         }
         
         // Calculate stats based on weed detections
