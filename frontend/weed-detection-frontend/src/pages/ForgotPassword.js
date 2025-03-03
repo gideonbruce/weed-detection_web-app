@@ -1,9 +1,11 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const handleForgotPassword = async (e) => {
         e.preventDefault();
@@ -21,6 +23,10 @@ const ForgotPassword = () => {
 
             if (response.ok) {
                 setMessage("A reset link has been sent to your email.");
+
+                setTimeout(() => {
+                    navigate(`/reset-password?token=${data.reset_link.split("token=")[1]}`);
+                }, 3000);
             } else {
                 setError(data.message || "Something went wrong.");
             }

@@ -20,7 +20,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/home" element={isAuthenticated() ? <Home /> : <Navigate to="/login" />} />
+        <Route path="/home" element={isAuthenticated() ? <Home /> : <Navigate to="/" />} />
         <Route path="/about" element={<About />} />
         <Route path="/dummy-farm-ui" element={<DummyFarmUI />} />  
         <Route path="/farm" element={<Mapping />} />

@@ -1,3 +1,4 @@
+import smtplib
 from flask import Flask, request, jsonify, send_file
 from ultralytics import YOLO
 import cv2
@@ -92,23 +93,27 @@ def forgot_password():
     token = jwt.encode(
         {"email": email, "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=2)},
         app.config["SECRET_KEY"],
-        algorithm="hs256",
+        algorithm="HS256",
     )
 
     reset_link = f"http://localhost:3000/reset-password?token={token}"
-
+    
+    return jsonify({"reset_link": reset_link}), 200
     #send email
     try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login("email@gmail.com", emailpassword)
-        message = f"Subject: Password reset\n\nClick here to reset your password: {reset_link}"
-        server.sendmail("email@gmail.com", email, message)
-        server.quit()
-    except:
-        return jsonify({"message": "Failed to send email"}), 500
+        #server = smtplib.SMTP("smtp.gmail.com", 587)
+        #server.starttls()
+        #server.login("email@gmail.com", emailpassword)
+        #message = f"Subject: Password reset\n\nClick here to reset your password: {reset_link}"
+        #server.sendmail("email@gmail.com", email, message)
+        #server.quit()*/
+        #except:
+        #return jsonify({"message": "Failed to send email"}), 500
         
-    return jsonify({"message": "Password reset link sent"}), 200
+        return jsonify({"message": "Password reset link sent"}), 200
+    except Exception as e:
+        print("Email sending failed:", str(e))
+        return jsonify({"message": "Failed to send email", "error": str(e)}), 500
 
 # api route to store json data in mysqldb
 @app.route('/store_detections', methods=['POST'])
@@ -168,11 +173,14 @@ def get_weed_trend():
         connection = get_db_connection()
         cursor = connection.cursor()
 
-        cursor.execute("SELECT date(timestamp) as date, COUNT(*) as weed_count FROM weed_detections GROUP BY date ORDER BY date ASC; """)
+        cursor.execute("SELECT date(timestamp) as date, COUNT(*) as weed_count FROM weed_detections GROUP BY date ORDER BY date ASC;")
+        rows = cursor.fetchall()
+
         cursor.close()
         connection.close()
-        trend_data = [{"date": row[0], "weed_count": row[1]} for row in rows]
-        return
+
+        trend_data = [{"date": row["date"], "weed_count": row["weed_count"]} for row in rows]
+        return trend_data
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
@@ -181,9 +189,37 @@ def get_weed_trend():
 def weed_trend():
     try:
         data = get_weed_trend()
-        return jsonify(data)
+        return jsonify(data), 200
     except Exception as e:
-        return jsonify({"Error": str(e)}, 500)
+        return jsonify({"Error": str(e)}), 500
+
+@app.route('/reset-password', methods=["POST"])
+def reset_password():
+    data = request.get_json()
+    token = data.get("token")
+    new_password = data.get("new_password")
+
+    if not token or not new_password:
+        return jsonify({"message": "Token and new password are required"}), 400
+
+    try:
+        payload = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        email = payload.get("email")
+
+        hashed_password = generate_password_hash(new_password)
+
+        connection = get_db_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE users SET password=%s WHERE email=%s", (hashed_password, email))
+            connection.commit()
+        connection.close()
+
+        return jsonify({"message": "Password reset succesful"}), 200
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Reset link expired"}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid token"}), 400
 
 @app.route('/detect', methods=['POST'])
 def detect():
