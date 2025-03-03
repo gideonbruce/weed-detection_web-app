@@ -129,7 +129,7 @@ def store_detections():
                 detection['id'],
                 detection['latitude'],
                 detection['longitude'],
-                datetime.strptime(detection['timestamp'], "%Y-%m-%dT%H:%M:%S.%fZ"),
+                datetime.datetime.strptime(detection['timestamp'], "%Y-%m-%dT%H:%M:%S.%fZ"),
                 detection['confidence']
             )
             cursor.execute(sql, values)

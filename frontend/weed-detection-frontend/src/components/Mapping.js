@@ -213,11 +213,11 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
     const moveDrone = () => {
         if (!simulationRunningRef.current) return;
 
-        // Random position within polygon bounds based on grid
+        // random position within polygon bounds based on grid
         const lat = bounds.getSouth() + (currentRow * gridSize);
         const lng = bounds.getWest() + (currentCol * gridSize);
         
-        // Update drone position
+        // update drone position
         setDronePosition([lat, lng]);
 
         const distanceToEdge = Math.min(
@@ -284,7 +284,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
     return null;
   };
 
-  // Handle draw events
+  // handle draw events
   const onCreated = (e) => {
     const { layerType, layer } = e;
     
@@ -292,7 +292,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
       const newPolygon = layer.getLatLngs()[0].map(latlng => [latlng.lat, latlng.lng]);
       setDroneAreaPolygons([newPolygon]);
       
-      // If this is the first polygon, set drone at center
+      // if this is the first polygon, set drone at center
         const center = layer.getBounds().getCenter();
         setDronePosition([center.lat, center.lng]);
       }
@@ -327,39 +327,51 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
   }, [dronePosition, droneAreaPolygons, simulateDroneFlight, isSimulating]);*/
 
   return (
-    <div className="weed-detection-map-container">
-      <div className="map-controls">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white shadow-lg rounded-lg p-6 w-1/5 min-w-[200px]">
         <div className="info-panel">
-          <h3>Drone Status</h3>
-          <p>Altitude: {droneAltitude} meters</p>
-          <div className="altitude-controls">
-            <button onClick={() => changeAltitude(5)}>+5m</button>
-            <button onClick={() => changeAltitude(-5)}>-5m</button>
+          <h3 className='text-lg font-semibold text-gray-800 mb-2'>Drone Status</h3>
+          <p className='text-sm text-gray-700'><span className='font-medium'>Altitude:</span> {droneAltitude} meters</p>
+          <div className="flex gap-2 mt-2">
+            <button onClick={() => changeAltitude(5)} className='px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700'>+5m</button>
+            <button onClick={() => changeAltitude(-5)} className='px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700'>-5m</button>
           </div>
           
-          <h3>Weather</h3>
-          <p>Temperature: {weather.temperature}°C</p>
-          <p>Humidity: {weather.humidity}%</p>
-          <p>Wind: {weather.windSpeed} km/h {weather.windDirection}</p>
-          <p>Conditions: {weather.description}</p>
+          <h3 className='text-lg font-semibold text-gray-800 mt-3 mb-2'>Weather</h3>
+          <p className='text-sm text-gray-700'><span className="font-medium">Temperature:</span> {weather.temperature}°C</p>
+          <p className='text-sm text-gray-700'><span className="font-medium">Humidity:</span> {weather.humidity}%</p>
+          <p className='text-sm text-gray-700'><span className="font-medium">Wind:</span> {weather.windSpeed} km/h {weather.windDirection}</p>
+          <p className='text-sm text-gray-700'><span className="font-medium">Conditions:</span> {weather.description}</p>
           
-          <h3>Weed Detections</h3>
-          <p>Total detected: {detections.length}</p>
+          <h3 className="text-lg font-semibold text-gray-800 mt-4 mb-2">Weed Detections</h3>
+          <p className="text-sm text-gray-700"><span className="font-medium">Total detected:</span> {detections.length}</p>
 
-          <div className='action-buttons'>
+          <div className="mt-4 flex flex-wrap gap-1">
             <button
-            onClick={startSimulation}
-            disabled={isSimulating || !dronePosition || droneAreaPolygons.length === 0}
+              onClick={startSimulation}
+              disabled={isSimulating || !dronePosition || droneAreaPolygons.length === 0}
+              className={`px-2 py-1 text-xs rounded text-white ${
+                isSimulating ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'
+              }`}
             >
-              {isSimulating ? 'Simulating...' : 'Start Simulation'}
+              {isSimulating ? 'Simulating...' : 'Start'}
             </button>
-            <button onClick={toggleHeatmap}>
+
+            <button 
+              onClick={toggleHeatmap}
+              className="px-2 py-1 text-xs bg-yellow-500 text-white rounded hover:bg-yellow-600"
+            >
               {showHeatmap ? 'Hide Heatmap' : 'Show Heatmap'}
             </button>
-            <button onClick={exportDetectionsToJSON}
-            disabled={detections.length === 0}
+
+            <button
+              onClick={exportDetectionsToJSON}
+              disabled={detections.length === 0}
+              className={`px-2 py-1 text-xs rounded text-white ${
+                detections.length === 0 ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
+              }`}
             >
-              Export Detections to JSON
+              Export JSON
             </button>
           </div>
         </div>
@@ -399,12 +411,17 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
             })}
           >
             <Popup>
-              <div>
-                <h3>Drone</h3>
-                <p>Altitude: {droneAltitude}m</p>
-                <p>Lat: {dronePosition[0].toFixed(6)}</p>
-                <p>Lng: {dronePosition[1].toFixed(6)}</p>
-                <p>Status: {isSimulating ? 'Flying' : 'Idle'}</p>
+              <div className='p-4 bg-white shadow-lg rounded-lg text-gray-800'>
+                <h3 className='text-lg font-semibold mb-2'>Drone</h3>
+                <p className='text-sm'>Altitude: {droneAltitude}m</p>
+                <p className='text-sm'>Lat: {dronePosition[0].toFixed(6)}</p>
+                <p className='text-sm'>Lng: {dronePosition[1].toFixed(6)}</p>
+                <p className='text-sm'>
+                  <span className='font-medium'>Status:</span>
+                  <span className={`ml-1 px-2 py-1 rounded ${isSimulating ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-800'}`}>
+                    {isSimulating ? 'Flying' : 'Idle'}
+                    </span>
+                    </p>
               </div>
             </Popup>
           </Marker>
@@ -432,16 +449,18 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         <MapEvents />
       </MapContainer>
       
-      <div className="map-instructions">
-        <h3>Instructions</h3>
-        <ul>
-          <li>Use the polygon tool to draw drone coverage areas</li>
-          <li>Click "Start Simulation" to begin drone flight</li>
-          <li>Drone will systematically cover the area and detect weeds</li>
-          <li>Toggle the heatmap to visualize weed density</li>
-          <li>Ctrl+Click on map to manually add a weed detection (testing 123)</li>
-          <li>Click "Export Detections to JSON" to save detected weed coordinates</li>
-        </ul>
+      <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
+        <div className='bg-white shadow-lg rounded-lg p-6 max-w-md w-full'>
+          <h3 className='text-xl font-semibold text-gray-800 mb-4'>Instructions</h3>
+          <ul className='list-disc list-inside space-y-2 text-gray-700'>
+            <li>Use the polygon tool to draw drone coverage areas</li>
+            <li>Click <span className='font-medium text-blue-600'>"Start Simulation"</span> to begin drone flight</li>
+            <li>Drone will systematically cover the area and detect weeds</li>
+            <li>Toggle the heatmap to visualize weed density</li>
+            <li>Ctrl+Click on map to manually add a weed detection (testing 123)</li>
+            <li>Click <span className='font-medium text-green-600'>"Export Detections to JSON"</span> to save detected weed coordinates</li>
+          </ul>
+        </div>
       </div>
       
       <style jsx>{`

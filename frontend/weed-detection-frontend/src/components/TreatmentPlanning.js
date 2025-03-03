@@ -419,198 +419,169 @@ const TreatmentPlanning = () => {
   }
 
   return (
-    <div className="treatment-planning-container">
-      <div className="header">
-        <h1>Treatment Planning</h1>
-        <div className="navigation-links">
-          <Link to="/weeds-detected" className="nav-link">View Weed Detections</Link>
-          <Link to="/farm" className="nav-link">Back to Mapping</Link>
+    <div className="min-h-screen bg-gray-100 p-6">
+    {/* Header Section */}
+    <div className="flex justify-between items-center bg-white p-4 shadow-md rounded-lg mb-6">
+      <h1 className="text-xl font-bold text-gray-800">Treatment Planning</h1>
+      <div className="flex gap-4">
+        <Link to="/weeds-detected" className="text-blue-600 hover:underline">View Weed Detections</Link>
+        <Link to="/farm" className="text-blue-600 hover:underline">Back to Mapping</Link>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Treatment Options Section */}
+      <div className="bg-white shadow-lg rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Treatment Options</h2>
+        
+        <div className="space-y-4">
+          {/* Precision Treatment */}
+          <div 
+            className={`p-4 border rounded-lg cursor-pointer transition ${
+              selectedTreatment === 'precision' ? 'bg-green-100 border-green-500' : 'bg-gray-50'
+            }`}
+            onClick={() => setSelectedTreatment('precision')}
+          >
+            <h3 className="text-md font-semibold text-gray-700">Precision Treatment</h3>
+            <p className="text-sm text-gray-600">Target individual weeds with minimal herbicide.</p>
+            <ul className="list-disc ml-5 text-sm text-gray-500">
+              <li>Lowest environmental impact</li>
+              <li>Most time-consuming</li>
+              <li>Highest precision</li>
+            </ul>
+          </div>
+
+          {/* Zone Treatment */}
+          <div 
+            className={`p-4 border rounded-lg cursor-pointer transition ${
+              selectedTreatment === 'zone' ? 'bg-yellow-100 border-yellow-500' : 'bg-gray-50'
+            }`}
+            onClick={() => setSelectedTreatment('zone')}
+          >
+            <h3 className="text-md font-semibold text-gray-700">Zone Treatment</h3>
+            <p className="text-sm text-gray-600">Treat clusters of weeds in defined zones.</p>
+            <ul className="list-disc ml-5 text-sm text-gray-500">
+              <li>Balanced approach</li>
+              <li>Good efficiency</li>
+              <li>Moderate herbicide use</li>
+            </ul>
+          </div>
+
+          {/* Broadcast Treatment */}
+          <div 
+            className={`p-4 border rounded-lg cursor-pointer transition ${
+              selectedTreatment === 'broadcast' ? 'bg-red-100 border-red-500' : 'bg-gray-50'
+            }`}
+            onClick={() => setSelectedTreatment('broadcast')}
+          >
+            <h3 className="text-md font-semibold text-gray-700">Broadcast Treatment</h3>
+            <p className="text-sm text-gray-600">Apply herbicide across the entire infested area.</p>
+            <ul className="list-disc ml-5 text-sm text-gray-500">
+              <li>Fastest application</li>
+              <li>Highest herbicide usage</li>
+              <li>Best for severe infestations</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Treatment Stats */}
+        <h3 className="text-md font-semibold text-gray-800 mt-6">Treatment Statistics</h3>
+        <div className="grid grid-cols-2 gap-4 mt-2">
+          <div className="p-3 bg-gray-50 rounded shadow">
+            <span className="text-xs text-gray-500">Total Weeds:</span>
+            <p className="font-semibold text-gray-800">{treatmentStats.totalWeeds}</p>
+          </div>
+          <div className="p-3 bg-gray-50 rounded shadow">
+            <span className="text-xs text-gray-500">High Density Areas:</span>
+            <p className="font-semibold text-gray-800">{treatmentStats.highDensityAreas}</p>
+          </div>
+          <div className="p-3 bg-gray-50 rounded shadow">
+            <span className="text-xs text-gray-500">Est. Chemical Usage:</span>
+            <p className="font-semibold text-gray-800">{treatmentStats.estimatedChemicalUsage} L</p>
+          </div>
+          <div className="p-3 bg-gray-50 rounded shadow">
+            <span className="text-xs text-gray-500">Est. Time Required:</span>
+            <p className="font-semibold text-gray-800">{treatmentStats.estimatedTimeRequired} min</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-6 flex gap-4">
+          <button 
+            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            onClick={exportTreatmentPlan}
+          >
+            Export Plan
+          </button>
+          <button 
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={saveTreatmentPlan}
+          >
+            Save & Schedule
+          </button>
         </div>
       </div>
-      
-      <div className="content-container">
-        <div className="treatment-options">
-          <h2>Treatment Options</h2>
-          <div className="treatment-selection">
-            <div 
-              className={`treatment-option ${selectedTreatment === 'precision' ? 'selected' : ''}`}
-              onClick={() => setSelectedTreatment('precision')}
-            >
-              <h3>Precision Treatment</h3>
-              <p>Target individual weeds with minimal herbicide</p>
-              <ul>
-                <li>Lowest environmental impact</li>
-                <li>Most time-consuming</li>
-                <li>Highest precision</li>
-              </ul>
-            </div>
-            
-            <div 
-              className={`treatment-option ${selectedTreatment === 'zone' ? 'selected' : ''}`}
-              onClick={() => setSelectedTreatment('zone')}
-            >
-              <h3>Zone Treatment</h3>
-              <p>Treat clusters of weeds in defined zones</p>
-              <ul>
-                <li>Balanced approach</li>
-                <li>Good efficiency</li>
-                <li>Moderate herbicide use</li>
-              </ul>
-            </div>
-            
-            <div 
-              className={`treatment-option ${selectedTreatment === 'broadcast' ? 'selected' : ''}`}
-              onClick={() => setSelectedTreatment('broadcast')}
-            >
-              <h3>Broadcast Treatment</h3>
-              <p>Apply herbicide across the entire infested area</p>
-              <ul>
-                <li>Fastest application</li>
-                <li>Highest herbicide usage</li>
-                <li>Best for severe infestations</li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="treatment-stats">
-            <h3>Treatment Statistics</h3>
-            <div className="stats-grid">
-              <div className="stat-item">
-                <span className="stat-label">Total Weeds:</span>
-                <span className="stat-value">{treatmentStats.totalWeeds}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">High Density Areas:</span>
-                <span className="stat-value">{treatmentStats.highDensityAreas}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Est. Chemical Usage:</span>
-                <span className="stat-value">{treatmentStats.estimatedChemicalUsage} L</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Est. Time Required:</span>
-                <span className="stat-value">{treatmentStats.estimatedTimeRequired} min</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Est. Cost:</span>
-                <span className="stat-value">Ksh {treatmentStats.costEstimate}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="treatment-actions">
-            <button className="action-button" onClick={exportTreatmentPlan}>
-              Export Treatment Plan
-            </button>
-            <button className="action-button primary" onClick={saveTreatmentPlan}>
-              Save & Schedule Treatment
-            </button>
-          </div>
-        </div>
-        
-        <div className="map-container">
+
+      {/* Map Section */}
+      <div className="bg-white shadow-lg rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Treatment Map</h2>
+        <div className="border rounded-lg overflow-hidden">
           <MapContainer
             center={centerPosition}
             zoom={zoom}
-            style={{ height: "500px", width: "100%" }}
+            style={{ height: "400px", width: "100%" }}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              attribution='&copy; OpenStreetMap contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            
-            {/* Display weed detections */}
+
+            {/* Weed Detections */}
             {weedDetections.map(weed => (
-              <Marker 
-                key={weed.id}
-                position={[weed.latitude, weed.longitude]}
-                icon={weedIcon}
-              >
+              <Marker key={weed.id} position={[weed.latitude, weed.longitude]} icon={weedIcon}>
                 <Popup>
-                  <div>
-                    <h3>Weed Detected</h3>
-                    <p>Confidence: {weed.confidence}%</p>
-                    <p>Time: {new Date(weed.timestamp).toLocaleTimeString()}</p>
-                    <p>Lat: {weed.latitude.toFixed(6)}</p>
-                    <p>Lng: {weed.longitude.toFixed(6)}</p>
-                  </div>
+                  <h3 className="font-semibold">Weed Detected</h3>
+                  <p>Confidence: {weed.confidence}%</p>
+                  <p>Lat: {weed.latitude.toFixed(6)}</p>
+                  <p>Lng: {weed.longitude.toFixed(6)}</p>
                 </Popup>
               </Marker>
             ))}
-            
-            {/* Display treatment areas based on treatment type */}
-            {treatmentAreas.map((area, index) => {
-              if (area.type === 'broadcast' || (area.type === 'zone' && area.bounds)) {
-                // For broadcast or zone with bounds, display rectangle
-                const corners = [
+
+            {/* Treatment Areas */}
+            {treatmentAreas.map((area, index) => (
+              <Polygon
+                key={`area-${index}`}
+                positions={area.points || [
                   [area.bounds.southWest[0], area.bounds.southWest[1]],
                   [area.bounds.southWest[0], area.bounds.northEast[1]],
                   [area.bounds.northEast[0], area.bounds.northEast[1]],
                   [area.bounds.northEast[0], area.bounds.southWest[1]]
-                ];
-                
-                return (
-                  <Polygon
-                    key={`area-${index}`}
-                    positions={corners}
-                    pathOptions={{
-                      color: area.type === 'broadcast' ? 'red' : 'orange',
-                      fillOpacity: 0.3
-                    }}
-                  >
-                    <Popup>
-                      <div>
-                        <h3>{area.type === 'broadcast' ? 'Broadcast Area' : 'Treatment Zone'}</h3>
-                        <p>Weeds: {area.weedCount}</p>
-                        <p>Recommended: {area.herbicide}</p>
-                      </div>
-                    </Popup>
-                  </Polygon>
-                );
-              } else if (area.points) {
-                // For zones with polygon points
-                return (
-                  <Polygon
-                    key={`area-${index}`}
-                    positions={area.points}
-                    pathOptions={{
-                      color: 'orange',
-                      fillOpacity: 0.3
-                    }}
-                  >
-                    <Popup>
-                      <div>
-                        <h3>Treatment Zone</h3>
-                        <p>Weeds: {area.weedCount}</p>
-                        <p>Recommended: {area.herbicide}</p>
-                      </div>
-                    </Popup>
-                  </Polygon>
-                );
-              }
-              // For spot treatment (circles) 
-              return null;
-            })}
+                ]}
+                pathOptions={{ color: area.type === 'broadcast' ? 'red' : 'orange', fillOpacity: 0.3 }}
+              >
+                <Popup>
+                  <h3 className="font-semibold">{area.type === 'broadcast' ? 'Broadcast Area' : 'Treatment Zone'}</h3>
+                  <p>Weeds: {area.weedCount}</p>
+                </Popup>
+              </Polygon>
+            ))}
           </MapContainer>
-          
-          <div className="treatment-legend">
-            <h3>Map Legend</h3>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: 'green' }}></div>
-              <span>Weed Detection</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: 'orange' }}></div>
-              <span>Zone Treatment Area</span>
-            </div>
-            <div className="legend-item">
-              <div className="legend-color" style={{ backgroundColor: 'red' }}></div>
-              <span>Broadcast Treatment Area</span>
-            </div>
+        </div>
+
+        {/* Map Legend */}
+        <div className="mt-4">
+          <h3 className="font-semibold text-gray-800">Legend</h3>
+          <div className="flex gap-4 mt-2">
+            <span className="px-2 py-1 bg-green-500 text-white text-xs rounded">Weed</span>
+            <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded">Zone Treatment</span>
+            <span className="px-2 py-1 bg-red-500 text-white text-xs rounded">Broadcast Treatment</span>
           </div>
         </div>
       </div>
     </div>
+  </div>
+
   );
 };
 
