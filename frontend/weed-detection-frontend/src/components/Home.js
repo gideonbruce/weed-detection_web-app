@@ -40,6 +40,7 @@ const Home = () => {
       }
     } catch (error) {
       alert("Failed to connect to the server.");
+      (error && <p className="text-red-500 mt-2">{error}</p>)
     } finally {
       setLoading(false);
     }
