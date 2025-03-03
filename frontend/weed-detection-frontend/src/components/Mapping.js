@@ -380,6 +380,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
       <MapContainer
         center={center}
         zoom={zoom}
+        className='className="h-[70vh] w-full rounded-2xl shadow-lg overflow-hidden'
         style={{ height: "70vh", width: "100%" }}
         whenCreated={mapInstance => { mapRef.current = mapInstance }}
       >

@@ -503,6 +503,10 @@ const TreatmentPlanning = () => {
             <span className="text-xs text-gray-500">Est. Time Required:</span>
             <p className="font-semibold text-gray-800">{treatmentStats.estimatedTimeRequired} min</p>
           </div>
+          <div className="p-3 bg-gray-50 rounded shadow">
+            <span className="text-xs text-gray-500">Est. Cost:</span>
+            <p className="font-semibold text-gray-800">{treatmentStats.costEstimate} Ksh</p>
+          </div>
         </div>
 
         {/* Action Buttons */}
