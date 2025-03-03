@@ -8,14 +8,15 @@ from flask_cors import CORS
 import pymysql
 import bcrypt
 import jwt
-from datetime import datetime
+import datetime
+#from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
 model = YOLO("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-weed-model.pt")  
 
-app.config["SECRET_KEY"] = "dcdrdtrcsewsdcx"
+app.config["SECRET_KEY"] = "dcdrdtrcsewdcx"
 
 #Database conn
 def get_db_connection():
@@ -160,6 +161,29 @@ def get_detections():
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
+@app.route('/get_weed_trend', methods=['GET'])
+def get_weed_trend():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT date(timestamp) as date, COUNT(*) as weed_count FROM weed_detections GROUP BY date ORDER BY date ASC; """)
+        cursor.close()
+        connection.close()
+        trend_data = [{"date": row[0], "weed_count": row[1]} for row in rows]
+        return
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
+@app.route('/weed_trend', methods=['GET'])
+def weed_trend():
+    try:
+        data = get_weed_trend()
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"Error": str(e)}, 500)
 
 @app.route('/detect', methods=['POST'])
 def detect():

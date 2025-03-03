@@ -24,7 +24,7 @@ const Signup = () => {
 
             if (response.ok) {
                 setSuccess('Signup successful! Redirecting to login...');
-                setTimeout(() => navigate('/login'), 2000);
+                setTimeout(() => navigate('/'), 2000);
             } else {
                 setError(data.message || 'Signup failed');
             }

@@ -12,12 +12,13 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import WeedDetectionsTable from "./components/WeedDetectionsTable";
 import TreatmentPlanning from "./components/TreatmentPlanning";
+import Dashboard from "./components/Dashboard";
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/home" element={isAuthenticated() ? <Home /> : <Navigate to="/login" />} />
         <Route path="/about" element={<About />} />
@@ -27,6 +28,7 @@ const App = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/weeds-detected" element={<WeedDetectionsTable />} />
         <Route path="/treatment-planning" element={<TreatmentPlanning />} /> 
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );

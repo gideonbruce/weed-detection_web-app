@@ -166,7 +166,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
       position: [lat, lng],
       latitude: lat,
       longitude: lng,
-      confidence: Math.round(70 + Math.random() * 30), // Simulated confidence score
+      confidence: Math.round(70 + Math.random() * 30), 
       timestamp: new Date().toISOString(),
       imageUrl: `https://via.placeholder.com/150?text=Weed+Detected`,
     };

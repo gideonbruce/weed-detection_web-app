@@ -16,6 +16,7 @@
     "react-leaflet-draw": "^0.20.6",
     "react-router-dom": "^7.2.0",
     "react-scripts": "5.0.1",
+    "recharts": "^2.15.1",
     "web-vitals": "^2.1.4",
     "weed-detection-frontend": "file:",
     "workbox-core": "^7.3.0",
