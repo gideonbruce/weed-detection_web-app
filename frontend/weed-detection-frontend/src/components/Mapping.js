@@ -463,65 +463,6 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
           </ul>
         </div>
       </div>
-      
-      <style jsx>{`
-        .weed-detection-map-container {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-        
-        .map-controls {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 10px;
-        }
-        
-        .info-panel {
-          background: white;
-          border-radius: 4px;
-          padding: 15px;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .altitude-controls {
-          display: flex;
-          gap: 10px;
-          margin: 10px 0;
-        }
-
-        .action-buttons {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          margin-top: 15px;
-        }
-
-        .action-buttons button {
-          padding: 8px 12px;
-          background: #4CAF50;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-
-        .action-buttons button:disabled {
-          background: #cccccc;
-          cursor: not-allowed;
-        }
-
-        .actions-buttons button:hover:not(:disabled) {
-          background: #45a049;
-        }
-        
-        .map-instructions {
-          background: #f8f9fa;
-          padding: 15px;
-          border-radius: 4px;
-          margin-top: 15px;
-        }
-      `}</style>
     </div>
   );
 };

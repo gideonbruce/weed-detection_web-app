@@ -4,7 +4,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Link } from 'react-router-dom';
 //import weedIconImg from '../assets/weed-icon.png'; 
-//import '../styles/TreatmentPlanning.css'; 
 
 // weed icon
 const weedIcon = L.icon({
@@ -185,14 +184,14 @@ const TreatmentPlanning = () => {
         // Precision spraying uses less chemical but takes more time
         chemicalUsage = totalWeeds * 0.05; // 0.05 liters per weed
         timeRequired = totalWeeds * 1; // 1 minute per weed
-        costEstimate = 10 + (chemicalUsage * 20) + (timeRequired / 60 * 50); // Base cost + chemical cost + labor cost
+        costEstimate = 10 + (chemicalUsage * 20) + (timeRequired / 60 * 30); // Base cost + chemical cost + labor cost
         break;
         
       case 'zone':
         // Zone treatment is a middle ground
         chemicalUsage = totalWeeds * 0.1; // 0.1 liters per weed
         timeRequired = zones.length * 5; // 5 minutes per zone
-        costEstimate = 20 + (chemicalUsage * 15) + (timeRequired / 60 * 40); // Base cost + chemical cost + labor cost
+        costEstimate = 20 + (chemicalUsage * 15) + (timeRequired / 60 * 20); 
         break;
         
       case 'broadcast':
@@ -200,7 +199,7 @@ const TreatmentPlanning = () => {
         const area = calculateTotalArea(weeds);
         chemicalUsage = area * 0.002; // 0.002 liters per square meter
         timeRequired = Math.sqrt(area) * 0.5; // Rough estimate based on area size
-        costEstimate = 30 + (chemicalUsage * 10) + (timeRequired / 60 * 30); // Base cost + chemical cost + labor cost
+        costEstimate = 30 + (chemicalUsage * 10) + (timeRequired / 60 * 10); 
         break;
       default:
         console.warn(`Unknown method: ${method}`);
@@ -367,19 +366,34 @@ const TreatmentPlanning = () => {
   
   // Export treatment plan to JSON
   const exportTreatmentPlan = () => {
-    if (!currentTreatmentPlan) return;
-    
-    const jsonData = JSON.stringify(currentTreatmentPlan, null, 2);
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `treatment-plan-${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      if (!currentTreatmentPlan) {
+        console.error("Export failed: No treatment plan available.");
+        alert("No treatment plan to export!");
+        return;
+      }
+
+      console.log("Exporting treatment plan:", currentTreatmentPlan);
+      
+      const jsonData = JSON.stringify(currentTreatmentPlan, null, 2);
+      const blob = new Blob([jsonData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `treatment-plan-${new Date().toISOString().slice(0,10)}.json`;
+      document.body.appendChild(a);
+
+      console.log("Starting download...");
+      a.click();
+      console.log("Download initiated.");
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log("Cleaned up temporary URL.");
+    } catch (error) {
+      console.error("Error exporting treatment plan:", error);
+      alert("An error occurred while exporting the treatment plan.");
+    }
   };
   
   // Send treatment plan to backend
@@ -512,13 +526,13 @@ const TreatmentPlanning = () => {
         {/* Action Buttons */}
         <div className="mt-6 flex gap-4">
           <button 
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
             onClick={exportTreatmentPlan}
           >
             Export Plan
           </button>
           <button 
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             onClick={saveTreatmentPlan}
           >
             Save & Schedule
