@@ -1,5 +1,5 @@
 import smtplib
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, json, request, jsonify, send_file
 from ultralytics import YOLO
 import cv2
 import numpy as np
@@ -229,27 +229,33 @@ def reset_password():
 def create_treatment_plan():
     try:
         data = request.json
-        weed_type = data.get('weed_type')
-        recommended_action = data.get('recommended_action')
-        description = data.get('description', '')
+        method = data.get('method')
+        areas = data.get('areas')
+        total_weeds = data.get('total_weeds')
 
-        if not weed_type or not recommended_action:
+        if not data or "method" not in data or "areas" not in data or "total_weeds" not in data:
             return jsonify({"error": "Missing required fields"}), 400
+        
+        print("Recieved data:", data)
 
         connection = get_db_connection()
         cursor = connection.cursor()
 
         sql = """
-        INSERT INTO treatment_plans (weed_type, recommended_action, description)
+        INSERT INTO treatment_plans (method, areas, total_weeds)
         VALUES (%s, %s, %s)
         """
-        cursor.execute(sql, (weed_type, recommended_action, description))
+        cursor.execute(sql, (method, json.dumps(areas), total_weeds))
 
         connection.commit()
         cursor.close()
         connection.close()
 
         return jsonify({"message": "Treatment plan added successfully"}), 201
+    
+    except pymysql.MySQLError as e:
+        print("MySQL Error:", str(e))
+        return jsonify({"error": "Database Error", "details": str(e)}), 500
 
     except Exception as e:
         print("Error:", str(e))
@@ -263,6 +269,10 @@ def get_treatment_plans():
 
         cursor.execute("SELECT * FROM treatment_plans")
         plans = cursor.fetchall()
+
+        for plan in plans:
+            plan["areas"] = json.loads(plan["areas"])  # Convert JSON string to list
+
 
         cursor.close()
         connection.close()
