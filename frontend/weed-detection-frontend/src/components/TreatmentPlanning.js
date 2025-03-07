@@ -5,6 +5,7 @@ import TreatmentOptions from './TreatmentOptions';
 import TreatmentStats from './TreatmentStats'; 
 import TreatmentMap from './TreatmentMap';
 import { fetchWeedDetections, generateMockData } from './services/WeedService';
+import WeedMitigation from './Mitigation/WeedMitigation';
 import { 
   generateTreatmentPlan,
   calculateTreatmentStats,
@@ -144,7 +145,11 @@ const TreatmentPlanning = () => {
           centerPosition={mapSettings.centerPosition}
           zoom={mapSettings.zoom}
         />*/}
-        <WeedMitigation treatmentPlan={currentTreatmentPlan} />
+        {currentTreatmentPlan ? (
+          <WeedMitigation treatmentPlan={currentTreatmentPlan} />
+        ) : (
+          <p className='text-red-500'>No treatment plan available.</p>
+        )}
       </div>
     </div>
   );
