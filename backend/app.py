@@ -225,6 +225,54 @@ def reset_password():
     except jwt.InvalidTokenError:
         return jsonify({"message": "Invalid token"}), 400
 
+@app.route('/treatment-plans', methods=['POST'])
+def create_treatment_plan():
+    try:
+        data = request.json
+        weed_type = data.get('weed_type')
+        recommended_action = data.get('recommended_action')
+        description = data.get('description', '')
+
+        if not weed_type or not recommended_action:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        sql = """
+        INSERT INTO treatment_plans (weed_type, recommended_action, description)
+        VALUES (%s, %s, %s)
+        """
+        cursor.execute(sql, (weed_type, recommended_action, description))
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return jsonify({"message": "Treatment plan added successfully"}), 201
+
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
+@app.route('/treatment-plans', methods=['GET'])
+def get_treatment_plans():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT * FROM treatment_plans")
+        plans = cursor.fetchall()
+
+        cursor.close()
+        connection.close()
+
+        return jsonify(plans), 200
+
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
 @app.route('/mitigate_weed', methods=['POST'])
 def mitigate_weed():
     try:
