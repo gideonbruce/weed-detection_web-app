@@ -192,7 +192,7 @@ export const generateTreatmentPlan = (weedDetections, treatmentMethod) => {
       break;
       
     default:
-      console.error("Invalid treatement method")
+      console.error("Invalid treatement method:", treatmentMethod);
       areas = [];
   }
   
@@ -203,7 +203,8 @@ export const generateTreatmentPlan = (weedDetections, treatmentMethod) => {
     createdAt: new Date().toISOString(),
     totalWeeds: weedDetections.length,
   };
-  
+   console.log("Generated Plan:", plan);
+
   return { areas, plan };
 };
   

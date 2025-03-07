@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { TreatmentMap } from './TreatmentMap';
 import { TreatmentTable } from './TreatmentTable';
 import { TreatmentStatus } from './TreatmentStatus';
@@ -11,7 +12,11 @@ import {
   calculatePolygonPoints 
 } from './Utils';
 
-const WeedMitigation = ({ treatmentPlan }) => {
+const WeedMitigation = ({ treatmentPlanProp }) => {
+  const { planId } = useParams();
+  const navigate = useNavigate();
+  
+  const [treatmentPlan, setTreatmentPlan] = useState(treatmentPlanProp || null);
   const [treatmentProgress, setTreatmentProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,20 +25,67 @@ const WeedMitigation = ({ treatmentPlan }) => {
   const [treatmentStatus, setTreatmentStatus] = useState('pending'); // pending, inProgress, completed, error
   const [statusMessage, setStatusMessage] = useState('');
 
+  // Fetch the treatment plan from the database if it was not passed as a prop
+  useEffect(() => {
+    const loadTreatmentPlan = async () => {
+      // If we already have a treatment plan from props, use it
+      if (treatmentPlanProp) {
+        setTreatmentPlan(treatmentPlanProp);
+        setLoading(false);
+        return;
+      }
+      
+      // Otherwise, try to load it from the database using the planId from the URL
+      if (!planId) {
+        setError("No treatment plan ID provided.");
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const fetchedPlan = await fetchTreatmentPlanById(planId);
+        
+        if (!fetchedPlan) {
+          throw new Error(`Treatment plan with ID ${planId} not found.`);
+        }
+        
+        setTreatmentPlan(fetchedPlan);
+        
+        // Set initial status based on the plan's status
+        if (fetchedPlan.status === 'completed') {
+          setTreatmentStatus('completed');
+          setTreatmentProgress(100);
+          setStatusMessage('This treatment has already been completed.');
+        } else if (fetchedPlan.status === 'in-progress') {
+          setTreatmentStatus('inProgress');
+          setTreatmentProgress(50); // Assume 50% complete if already in progress
+          setStatusMessage('Treatment is currently in progress.');
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading treatment plan:', err);
+        setError(err.message || 'Failed to load treatment plan');
+        setLoading(false);
+      }
+    };
+
+    loadTreatmentPlan();
+  }, [planId, treatmentPlanProp]);
+
   useEffect(() => {
     const initializeTreatmentPlan = async () => {
-      setLoading(true);
-      setError(null);
+      if (!treatmentPlan) return;
       
       try {
         const validationError = validateTreatmentPlan(treatmentPlan);
         
         if (validationError) {
           setError(validationError);
-          setLoading(false);
           return;
         }
-        
+
         // Find a valid area to center the map on
         const validAreas = treatmentPlan.areas.filter(area => 
           (area.points && area.points.length > 0) || 
@@ -45,20 +97,25 @@ const WeedMitigation = ({ treatmentPlan }) => {
           setCenterPosition(centerCoords);
           setZoom(17);
         }
-        
-        setLoading(false);
       } catch (err) {
         console.error('Error initializing treatment plan:', err);
-        setError('Failed to initialize treatment plan. See console for details.');
-        setLoading(false);
+        setError('Failed to initialize treatment plan: ' + err.message);
       }
     };
-    
+
     initializeTreatmentPlan();
   }, [treatmentPlan]);
 
   const handleStartTreatment = async () => {
+    if (!treatmentPlan || !treatmentPlan.id) {
+      setError("Cannot start treatment: Invalid treatment plan.");
+      return;
+    }
+
     try {
+      // Update the plan status in the database first
+      await updateTreatmentPlanStatus(treatmentPlan.id, 'in-progress');
+      
       setTreatmentStatus('inProgress');
       setStatusMessage('Sending treatment command...');
       setTreatmentProgress(10);
@@ -79,17 +136,23 @@ const WeedMitigation = ({ treatmentPlan }) => {
       clearInterval(progressInterval);
       
       if (result.success) {
+        // Update the plan status to completed in the database
+        await updateTreatmentPlanStatus(treatmentPlan.id, 'completed');
+        
         setTreatmentProgress(100);
         setTreatmentStatus('completed');
         setStatusMessage(result.message || 'Treatment completed successfully!');
       } else {
+        // Update the plan status to indicate an error
+        await updateTreatmentPlanStatus(treatmentPlan.id, 'error');
+        
         setTreatmentStatus('error');
         setStatusMessage(result.message || 'Treatment failed with an unknown error.');
       }
     } catch (err) {
       console.error('Error during treatment execution:', err);
       setTreatmentStatus('error');
-      setStatusMessage('An unexpected error occurred. Please try again.');
+      setStatusMessage(`An unexpected error occurred: ${err.message}`);
       setTreatmentProgress(0);
     }
   };
