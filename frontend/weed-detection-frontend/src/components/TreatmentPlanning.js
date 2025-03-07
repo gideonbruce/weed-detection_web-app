@@ -138,12 +138,13 @@ const TreatmentPlanning = () => {
         </div>
 
         {/* Map Section */}
-        <TreatmentMap 
+        {/*<TreatmentMap 
           weedDetections={weedDetections}
           treatmentAreas={treatmentAreas}
           centerPosition={mapSettings.centerPosition}
           zoom={mapSettings.zoom}
-        />
+        />*/}
+        <WeedMitigation treatmentPlan={currentTreatmentPlan} />
       </div>
     </div>
   );
