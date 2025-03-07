@@ -129,7 +129,10 @@ def store_detections():
         cursor = connection.cursor()
 
         for detection in data:
-            sql = "INSERT INTO weed_detections (id, latitude, longitude, timestamp, confidence) VALUES (%s,%s,%s,%s,%s)"
+            sql = """
+            INSERT INTO weed_detections (id, latitude, longitude, timestamp, confidence, mitigation_status)
+            VALUES (%s,%s,%s,%s,%s,%s)
+            """
             values = (
                 detection['id'],
                 detection['latitude'],
