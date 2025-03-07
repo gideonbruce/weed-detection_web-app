@@ -30,6 +30,7 @@ const Sidebar = () => {
           <a href="/farm" className="block py-2 px-5 text-gray-700 hover:bg-green-200">Farm</a>
           <a href="treatment-planning" className="block py-2 px-5 text-gray-700 hover:bg-green-200">Treatment Planning</a>
           <a href="/weeds-detected" className="block py-2 px-5 text-gray-700 hover:bg-green-200">Statistics</a>
+          <a href="/mitigation" className="block py-2 px-5 text-gray-700 hover:bg-green-200">Mitigation</a>
           <a href="/dashboard" className="block py-2 px-5 text-gray-700 hover:bg-green-200">Data Analysis</a>
         </nav>
         <button onClick={handleLogout} className="w-full py-2 px-4 text-white bg-red-500 hover:bg-red-700 mt-2 rounded-lg">

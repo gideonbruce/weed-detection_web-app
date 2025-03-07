@@ -13,6 +13,7 @@ import ResetPassword from "./pages/ResetPassword";
 import WeedDetectionsTable from "./components/WeedDetectionsTable";
 import TreatmentPlanning from "./components/TreatmentPlanning";
 import Dashboard from "./components/Dashboard";
+import Mitigation from "./components/Mitigation"
 
 const App = () => {
   return (
@@ -29,6 +30,7 @@ const App = () => {
         <Route path="/weeds-detected" element={<WeedDetectionsTable />} />
         <Route path="/treatment-planning" element={<TreatmentPlanning />} /> 
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/mitigation" element={<Mitigation />} />
       </Routes>
     </Router>
   );

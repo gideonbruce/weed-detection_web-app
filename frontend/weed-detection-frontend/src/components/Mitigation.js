@@ -8,17 +8,14 @@ const sendTreatmentCommand = async (treatmentPlan) => {
     // Simulate API call
     console.log('Sending treatment command:', treatmentPlan);
     // Replace with actual API call
-    // const response = await fetch('http://your-backend/start_treatment', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(treatmentPlan),
-    // });
-    // const data = await response.json();
-    // return data;
-    
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return { success: true, message: 'Treatment command sent successfully' };
+     const response = await fetch('http://your-backend/start_treatment', {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify(treatmentPlan),
+     });
+     const data = await response.json();
+     return data;
+
   } catch (error) {
     console.error('Error sending treatment command:', error);
     return { success: false, message: 'Failed to send treatment command' };
