@@ -12,7 +12,7 @@ import ResetPassword from "./pages/ResetPassword";
 import WeedDetectionsTable from "./components/WeedDetectionsTable";
 import TreatmentPlanning from "./components/TreatmentPlanning";
 import Dashboard from "./components/Dashboard";
-import Mitigation from "./components/Mitigation"
+import Mitigation from "./components/Mitigation/WeedMitigation"
 
 const App = () => {
   return (
