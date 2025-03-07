@@ -14,6 +14,7 @@ import {
 } from './services/TreatmentService';
 
 const TreatmentPlanning = () => {
+  const navigate = useNavigate();
   const [weedDetections, setWeedDetections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,6 +32,7 @@ const TreatmentPlanning = () => {
     estimatedTimeRequired: 0,
     costEstimate: 0
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   // fetch data from backend
   useEffect(() => {
@@ -74,7 +76,7 @@ const TreatmentPlanning = () => {
 
       const { areas, plan } = generateTreatmentPlan(weedDetections, selectedTreatment);
       console.log("Generate Treatment Plan:", plan);
-      
+
       setTreatmentAreas(areas);
       setCurrentTreatmentPlan(plan);
       setTreatmentStats(calculateTreatmentStats(weedDetections, selectedTreatment));
@@ -86,7 +88,32 @@ const TreatmentPlanning = () => {
   };
 
   const handleSavePlan = async () => {
-    await saveTreatmentPlan(currentTreatmentPlan);
+    if (!currentTreatmentPlan) {
+      alert("No treatment plan to save!");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const savedPlan = await saveTreatmentPlan(currentTreatmentPlan);
+
+      setCurrentTreatmentPlan(savedPlan);
+
+      alert('Treatment plan saved successfully!');
+
+      const goToMitigation = window.confirm(
+        "Treatment plan saved successfully! Would you like to proceed to mitigation?"
+      );
+
+      if (goToMitigation) {
+        navigate(`/weed-mitigation/${savedPlan.id}`);
+      }
+    } catch (error) {
+      console.error("Error saving treatment plan:", error);
+      alert(`Failed to save treatment plan: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Render loading state
