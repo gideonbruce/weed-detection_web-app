@@ -267,6 +267,25 @@ def mitigate_weed():
         print("Error:", str(e))
         return jsonify({"Error": "Internal Server Error", "details": str(e)}), 500
 
+@app.route('/get_mitigation_history', methods=['GET'])
+def get_mitigation_history():
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        cursor.execute(""""
+        SELECT wd.id, wd.latitude, wd.longitude, wd.timestamp, wd.mitigation_status, 
+               wm.method, wm.applied_by, wm.timestamp as mitigation_time, wm.notes
+        FROM weed_detections wd
+        JOIN weed_mitigations wm ON wd.id = wm.detection_id
+        WHERE wd.mitigation_status = 'completed'
+        ORDER BY wm.timestamp DESC              
+        """)
+
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)
