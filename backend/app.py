@@ -225,6 +225,25 @@ def reset_password():
     except jwt.InvalidTokenError:
         return jsonify({"message": "Invalid token"}), 400
 
+@app.route('/mitigate_weed', methods=['POST'])
+def mitigate_weed():
+    try:
+        data = request.json
+        detection_id = data.get('detection_id')
+        method = data.get('method')
+        applied_by = data.get('applied_by')
+        notes = data.get('notes', '')
+
+        if not detection_id or not method or not applied_by:
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({"Error": "Internal Server Error", "details": str(e)}), 500
+
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)
