@@ -240,6 +240,16 @@ def mitigate_weed():
         connection = get_db_connection()
         cursor = connection.cursor()
 
+        # insert into mitigation table
+        sql_insert = """
+        INSERT INTO weed_mitigations (detection_id, method, applied_by, notes)
+        VALUES (%s, %s, %s, %s)
+        """
+
+        cursor.execute(sql_insert, (detection_id, method, applied_by, notes))
+
+        #update
+
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"Error": "Internal Server Error", "details": str(e)}), 500
