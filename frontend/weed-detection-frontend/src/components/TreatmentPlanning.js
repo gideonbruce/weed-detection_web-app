@@ -69,7 +69,12 @@ const TreatmentPlanning = () => {
   // recalculate treatment plans when treatment method or weed data changes
   useEffect(() => {
     if (weedDetections.length > 0) {
+      console.log("Weed Detections:", weedDetections);
+      console.log("Selected Treatment:", selectedTreatment);
+
       const { areas, plan } = generateTreatmentPlan(weedDetections, selectedTreatment);
+      console.log("Generate Treatment Plan:", plan);
+      
       setTreatmentAreas(areas);
       setCurrentTreatmentPlan(plan);
       setTreatmentStats(calculateTreatmentStats(weedDetections, selectedTreatment));

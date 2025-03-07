@@ -1,4 +1,4 @@
-// File: services/treatmentService.js
+
 
 // Helper function: Calculate distance between two points using Haversine formula
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -17,218 +17,226 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   };
   
   // Calculate bounds of a set of weeds
-  const calculateBounds = (weeds) => {
-    let minLat = Infinity;
-    let maxLat = -Infinity;
-    let minLng = Infinity;
-    let maxLng = -Infinity;
-    
-    weeds.forEach(weed => {
-      minLat = Math.min(minLat, weed.latitude);
-      maxLat = Math.max(maxLat, weed.latitude);
-      minLng = Math.min(minLng, weed.longitude);
-      maxLng = Math.max(maxLng, weed.longitude);
-    });
-    
-    return {
-      southWest: [minLat, minLng],
-      northEast: [maxLat, maxLng]
-    };
+const calculateBounds = (weeds) => {
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  
+  weeds.forEach(weed => {
+    minLat = Math.min(minLat, weed.latitude);
+    maxLat = Math.max(maxLat, weed.latitude);
+    minLng = Math.min(minLng, weed.longitude);
+    maxLng = Math.max(maxLng, weed.longitude);
+  });
+  
+  return {
+    southWest: [minLat, minLng],
+    northEast: [maxLat, maxLng]
   };
+};
   
   // Expand bounds by a given amount
-  const expandBounds = (bounds, amount) => {
-    return {
-      southWest: [bounds.southWest[0] - amount, bounds.southWest[1] - amount],
-      northEast: [bounds.northEast[0] + amount, bounds.northEast[1] + amount]
-    };
+const expandBounds = (bounds, amount) => {
+  return {
+    southWest: [bounds.southWest[0] - amount, bounds.southWest[1] - amount],
+    northEast: [bounds.northEast[0] + amount, bounds.northEast[1] + amount]
   };
+};
+
+// Calculate rough area in square meters from bounds
+const calculateTotalArea = (weeds) => {
+  const bounds = calculateBounds(weeds);
+  const latDistance = calculateDistance(
+    bounds.southWest[0], bounds.southWest[1],
+    bounds.northEast[0], bounds.southWest[1]
+  );
+  const lngDistance = calculateDistance(
+    bounds.southWest[0], bounds.southWest[1],
+    bounds.southWest[0], bounds.northEast[1]
+  );
   
-  // Calculate rough area in square meters from bounds
-  const calculateTotalArea = (weeds) => {
-    const bounds = calculateBounds(weeds);
-    const latDistance = calculateDistance(
-      bounds.southWest[0], bounds.southWest[1],
-      bounds.northEast[0], bounds.southWest[1]
-    );
-    const lngDistance = calculateDistance(
-      bounds.southWest[0], bounds.southWest[1],
-      bounds.southWest[0], bounds.northEast[1]
-    );
-    
-    return latDistance * lngDistance;
-  };
+  return latDistance * lngDistance;
+};
   
   // Simple convex hull calculation for points
-  const calculateConvexHull = (weeds) => {
-    // For simplicity, just create a buffer around the weeds
-    // In a real application, use a proper convex hull algorithm
-    const bounds = calculateBounds(weeds);
-    const expandedBounds = expandBounds(bounds, 0.00005); // Add 5 meter buffer
-    
-    return [
-      [expandedBounds.southWest[0], expandedBounds.southWest[1]],
-      [expandedBounds.southWest[0], expandedBounds.northEast[1]],
-      [expandedBounds.northEast[0], expandedBounds.northEast[1]],
-      [expandedBounds.northEast[0], expandedBounds.southWest[1]]
-    ];
-  };
+const calculateConvexHull = (weeds) => {
+  // For simplicity, just create a buffer around the weeds
+  // In a real application, use a proper convex hull algorithm
+  const bounds = calculateBounds(weeds);
+  const expandedBounds = expandBounds(bounds, 0.00005); // Add 5 meter buffer
+  
+  return [
+    [expandedBounds.southWest[0], expandedBounds.southWest[1]],
+    [expandedBounds.southWest[0], expandedBounds.northEast[1]],
+    [expandedBounds.northEast[0], expandedBounds.northEast[1]],
+    [expandedBounds.northEast[0], expandedBounds.southWest[1]]
+  ];
+};
   
   // Get recommended herbicide based on weed confidence
-  const getRecommendedHerbicide = (confidence) => {
-    if (confidence >= 90) {
-      return 'High-Strength Selective Herbicide';
-    } else if (confidence >= 75) {
-      return 'Medium-Strength Selective Herbicide';
-    } else {
-      return 'Standard Selective Herbicide';
-    }
-  };
+const getRecommendedHerbicide = (confidence) => {
+  if (confidence >= 90) {
+    return 'High-Strength Selective Herbicide';
+  } else if (confidence >= 75) {
+    return 'Medium-Strength Selective Herbicide';
+  } else {
+    return 'Standard Selective Herbicide';
+  }
+};
   
   // Create treatment zones by grouping nearby weeds
-  const createTreatmentZones = (weeds) => {
-    const zones = [];
-    const processed = new Set();
+const createTreatmentZones = (weeds) => {
+  const zones = [];
+  const processed = new Set();
+  
+  for (let i = 0; i < weeds.length; i++) {
+    if (processed.has(i)) continue;
     
-    for (let i = 0; i < weeds.length; i++) {
-      if (processed.has(i)) continue;
+    const zoneWeeds = [weeds[i]];
+    processed.add(i);
+    
+    // find all weeds close to this one
+    for (let j = 0; j < weeds.length; j++) {
+      if (i === j || processed.has(j)) continue;
       
-      const zoneWeeds = [weeds[i]];
-      processed.add(i);
+      const distance = calculateDistance(
+        weeds[i].latitude, weeds[i].longitude,
+        weeds[j].latitude, weeds[j].longitude
+      );
       
-      // find all weeds close to this one
-      for (let j = 0; j < weeds.length; j++) {
-        if (i === j || processed.has(j)) continue;
-        
-        const distance = calculateDistance(
-          weeds[i].latitude, weeds[i].longitude,
-          weeds[j].latitude, weeds[j].longitude
-        );
-        
-        if (distance < 0.0001) { // approximately 10 meters
-          zoneWeeds.push(weeds[j]);
-          processed.add(j);
-        }
-      }
-      
-      // calculate zone polygon
-      if (zoneWeeds.length > 2) {
-        // create convex hull shape
-        const points = calculateConvexHull(zoneWeeds);
-        zones.push({
-          points,
-          type: 'zone',
-          weedCount: zoneWeeds.length,
-          herbicide: 'Moderate-Strength Herbicide'
-        });
-      } else if (zoneWeeds.length === 2) {
-        // create a rectangle area
-        const bounds = calculateBounds(zoneWeeds);
-        const expandedBounds = expandBounds(bounds, 0.00005); // add 5 meter buffer
-        zones.push({
-          bounds: expandedBounds,
-          type: 'zone',
-          weedCount: zoneWeeds.length,
-          herbicide: 'Moderate-Strength Herbicide'
-        });
-      } else {
-        // Single weed - small circular area
-        zones.push({
-          center: [zoneWeeds[0].latitude, zoneWeeds[0].longitude],
-          radius: 3, // 3 meters radius
-          type: 'zone',
-          weedCount: 1,
-          herbicide: getRecommendedHerbicide(zoneWeeds[0].confidence)
-        });
+      if (distance < 0.0001) { // approximately 10 meters
+        zoneWeeds.push(weeds[j]);
+        processed.add(j);
       }
     }
     
-    return zones;
-  };
+    // calculate zone polygon
+    if (zoneWeeds.length > 2) {
+      // create convex hull shape
+      const points = calculateConvexHull(zoneWeeds);
+      zones.push({
+        points,
+        type: 'zone',
+        weedCount: zoneWeeds.length,
+        herbicide: 'Moderate-Strength Herbicide'
+      });
+    } else if (zoneWeeds.length === 2) {
+      // create a rectangle area
+      const bounds = calculateBounds(zoneWeeds);
+      const expandedBounds = expandBounds(bounds, 0.00005); // add 5 meter buffer
+      zones.push({
+        bounds: expandedBounds,
+        type: 'zone',
+        weedCount: zoneWeeds.length,
+        herbicide: 'Moderate-Strength Herbicide'
+      });
+    } else {
+      // Single weed - small circular area
+      zones.push({
+        center: [zoneWeeds[0].latitude, zoneWeeds[0].longitude],
+        radius: 3, // 3 meters radius
+        type: 'zone',
+        weedCount: 1,
+        herbicide: getRecommendedHerbicide(zoneWeeds[0].confidence)
+      });
+    }
+  }
+  
+  return zones;
+};
   
   // Generate treatment plan based on weed detections and selected method
-  export const generateTreatmentPlan = (weedDetections, treatmentMethod) => {
-    if (weedDetections.length === 0) return { areas: [], plan: null };
-    
-    let areas = [];
-    
-    switch (treatmentMethod) {
-      case 'precision':
-        // For precision treatment, we create small circular areas around each weed
-        areas = weedDetections.map(weed => {
-          return {
-            center: [weed.latitude, weed.longitude],
-            radius: 2, // 2 meters radius
-            type: 'spot',
-            weedCount: 1,
-            herbicide: getRecommendedHerbicide(weed.confidence)
-          };
-        });
-        break;
-        
-      case 'zone':
-        // for zone treatment, we cluster nearby weeds
-        areas = createTreatmentZones(weedDetections);
-        break;
-        
-      case 'broadcast':
-        // For broadcast, we create one large area covering all weeds
-        if (weedDetections.length > 0) {
-          const bounds = calculateBounds(weedDetections);
-          areas = [{
-            bounds: bounds,
-            type: 'broadcast',
-            weedCount: weedDetections.length,
-            herbicide: 'Standard Herbicide Mix'
-          }];
-        }
-        break;
-        
-      default:
-        areas = [];
-    }
-    
-    // generate a treatment plan object
-    const plan = {
-      method: treatmentMethod,
-      areas: areas,
-      createdAt: new Date().toISOString(),
-      totalWeeds: weedDetections.length,
-    };
-    
-    return { areas, plan };
+export const generateTreatmentPlan = (weedDetections, treatmentMethod) => {
+  console.log("Generating Treatment Plan...");
+  console.log("Weed Detections:", weedDetections);
+  console.log("Treatment Method:", treatmentMethod);
+
+  if (weedDetections.length === 0) {
+    console.warn("No weed detections found. Returning empty plan.");
+    return { areas: [], plan: null };
+  }
+
+  let areas = [];
+  
+  switch (treatmentMethod) {
+    case 'precision':
+      // For precision treatment, we create small circular areas around each weed
+      areas = weedDetections.map(weed => {
+        return {
+          center: [weed.latitude, weed.longitude],
+          radius: 2, // 2 meters radius
+          type: 'spot',
+          weedCount: 1,
+          herbicide: getRecommendedHerbicide(weed.confidence)
+        };
+      });
+      break;
+      
+    case 'zone':
+      // for zone treatment, we cluster nearby weeds
+      areas = createTreatmentZones(weedDetections);
+      break;
+      
+    case 'broadcast':
+      // For broadcast, we create one large area covering all weeds
+      if (weedDetections.length > 0) {
+        const bounds = calculateBounds(weedDetections);
+        areas = [{
+          bounds: bounds,
+          type: 'broadcast',
+          weedCount: weedDetections.length,
+          herbicide: 'Standard Herbicide Mix'
+        }];
+      }
+      break;
+      
+    default:
+      console.error("Invalid treatement method")
+      areas = [];
+  }
+  
+  // generate a treatment plan object
+  const plan = {
+    method: treatmentMethod,
+    areas: areas,
+    createdAt: new Date().toISOString(),
+    totalWeeds: weedDetections.length,
   };
   
+  return { areas, plan };
+};
+  
   // Calculate treatment statistics
-  export const calculateTreatmentStats = (weeds, method) => {
-    if (!weeds || weeds.length === 0) {
-      return {
-        totalWeeds: 0,
-        highDensityAreas: 0,
-        estimatedChemicalUsage: 0,
-        estimatedTimeRequired: 0,
-        costEstimate: 0
-      };
-    }
+export const calculateTreatmentStats = (weeds, method) => {
+  if (!weeds || weeds.length === 0) {
+    return {
+      totalWeeds: 0,
+      highDensityAreas: 0,
+      estimatedChemicalUsage: 0,
+      estimatedTimeRequired: 0,
+      costEstimate: 0
+    };
+  }
     
-    const totalWeeds = weeds.length;
-    let chemicalUsage = 0;
-    let timeRequired = 0;
-    let costEstimate = 0;
-    
+  const totalWeeds = weeds.length;
+  let chemicalUsage = 0;
+  let timeRequired = 0;
+  let costEstimate = 0;
+  
     // calculating high density areas
-    const zones = createTreatmentZones(weeds);
-    const highDensityThreshold = 5; // 5 weeds in a zone is considered high density
-    const highDensityAreas = zones.filter(zone => zone.weedCount >= highDensityThreshold).length;
-    
-    // Calculate estimates based on treatment method
-    switch (method) {
-      case 'precision':
-        // Precision spraying uses less chemical but takes more time
-        chemicalUsage = totalWeeds * 0.05; // 0.05 liters per weed
-        timeRequired = totalWeeds * 1; // 1 minute per weed
-        costEstimate = 10 + (chemicalUsage * 20) + (timeRequired / 60 * 30); // Base cost + chemical cost + labor cost
-        break;
+  const zones = createTreatmentZones(weeds);
+  const highDensityThreshold = 5; // 5 weeds in a zone is considered high density
+  const highDensityAreas = zones.filter(zone => zone.weedCount >= highDensityThreshold).length;
+  
+  // Calculate estimates based on treatment method
+  switch (method) {
+    case 'precision':
+      // Precision spraying uses less chemical but takes more time
+      chemicalUsage = totalWeeds * 0.05; // 0.05 liters per weed
+      timeRequired = totalWeeds * 1; // 1 minute per weed
+      costEstimate = 10 + (chemicalUsage * 20) + (timeRequired / 60 * 30); // Base cost + chemical cost + labor cost
+      break;
         
       case 'zone':
         // Zone treatment is a middle ground
