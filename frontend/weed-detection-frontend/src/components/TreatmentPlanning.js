@@ -158,30 +158,37 @@ const TreatmentPlanning = () => {
             <button 
               className="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
               onClick={handleExportPlan}
+              disabled={!currentTreatmentPlan || isSaving}
             >
               Export Plan
             </button>
             <button 
               className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               onClick={handleSavePlan}
+              disabled={!currentTreatmentPlan || isSaving}
             >
-              Save & Schedule
+              {isSaving ? 'Saving...' : 'Save & Schedule'}
             </button>
           </div>
+
+          {currentTreatmentPlan && (
+            <div className="mt-4 p-3 bg-gray-100 rounded-lg">
+              <h3 className="font-medium">Treatment Plan Info</h3>
+              <p className="text-sm">ID: {currentTreatmentPlan.id}</p>
+              <p className="text-sm">Method: {currentTreatmentPlan.method}</p>
+              <p className="text-sm">Created: {new Date(currentTreatmentPlan.createdAt).toLocaleString()}</p>
+              <p className="text-sm">Status: {currentTreatmentPlan.status}</p>
+            </div>
+          )}
         </div>
 
         {/* Map Section */}
-        {/*<TreatmentMap 
+        <TreatmentMap 
           weedDetections={weedDetections}
           treatmentAreas={treatmentAreas}
           centerPosition={mapSettings.centerPosition}
           zoom={mapSettings.zoom}
-        />*/}
-        {currentTreatmentPlan ? (
-          <WeedMitigation treatmentPlan={currentTreatmentPlan} />
-        ) : (
-          <p className='text-red-500'>No treatment plan available.</p>
-        )}
+        />
       </div>
     </div>
   );
