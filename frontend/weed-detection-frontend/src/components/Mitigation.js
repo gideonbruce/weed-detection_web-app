@@ -8,7 +8,7 @@ const sendTreatmentCommand = async (treatmentPlan) => {
     // Simulate API call
     console.log('Sending treatment command:', treatmentPlan);
     // Replace with actual API call
-     const response = await fetch('http://your-backend/start_treatment', {
+     const response = await fetch('http://127.0.0.1:5000/mitigate_weed', {
        method: 'POST',
        headers: { 'Content-Type': 'application/json' },
        body: JSON.stringify(treatmentPlan),
