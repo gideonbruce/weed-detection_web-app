@@ -7,8 +7,8 @@ import { Link } from 'react-router-dom';
 
 // weed icon
 const weedIcon = L.icon({
-  iconUrl: "/weed-icon.png",
-  iconSize: [24, 24],
+  iconUrl: "/assets/weed-icon.png",
+  iconSize: [16, 16],
   iconAnchor: [12, 24],
   popupAnchor: [0, -24],
 });
