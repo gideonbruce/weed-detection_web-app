@@ -96,7 +96,11 @@ const TreatmentPlanning = () => {
 
     try {
       setIsSaving(true);
+
+      console.log("Saving treatment plan:", currentTreatmentPlan);
+
       const savedPlan = await saveTreatmentPlan(currentTreatmentPlan);
+      console.log("Saved plan Response:", savedPlan);
 
       setCurrentTreatmentPlan(savedPlan);
 
