@@ -25,6 +25,18 @@ const WeedMitigation = ({ treatmentPlanProp }) => {
   const [treatmentStatus, setTreatmentStatus] = useState('pending'); // pending, inProgress, completed, error
   const [statusMessage, setStatusMessage] = useState('');
 
+
+  const fetchTreatmentPlanById = async (planId) => {
+    try {
+      const response = await fetch(`/api/treatment-plans/${planId}`);
+      if (!response.ok) throw new Error("Failed to fetch treatment plan");
+      return await response.json();
+    } catch (err) {
+      console.error("Error fetching treatment plan:", err);
+      throw err;
+    }
+  };
+  
   // Fetch the treatment plan from the database if it was not passed as a prop
   useEffect(() => {
     const loadTreatmentPlan = async () => {

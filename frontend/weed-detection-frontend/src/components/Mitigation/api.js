@@ -15,3 +15,14 @@ export const sendTreatmentCommand = async (treatmentPlan) => {
       return { success: false, message: 'Failed to send treatment command' };
     }
   };
+
+export  const fetchTreatmentPlanById = async (planId) => {
+    try {
+      const response = await fetch(`/api/treatment-plans/${planId}`);
+      if (!response.ok) throw new Error("Failed to fetch treatment plan");
+      return await response.json();
+    } catch (err) {
+      console.error("Error fetching treatment plan:", err);
+      throw err;
+    }
+  };
