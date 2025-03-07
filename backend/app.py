@@ -282,6 +282,12 @@ def get_mitigation_history():
         ORDER BY wm.timestamp DESC              
         """)
 
+        history = cursor.fetchall()
+        cursor.close()
+        connection.close()
+
+        return jsonify(history), 200
+
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
