@@ -1,4 +1,7 @@
 // Helper function: Calculate distance between two points using Haversine formula
+
+import {v4 as uuidv4 } from 'uuid';
+
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Earth radius in meters
     const φ1 = lat1 * Math.PI / 180;
@@ -57,10 +60,8 @@ const calculateTotalArea = (weeds) => {
   return latDistance * lngDistance;
 };
   
-  // Simple convex hull calculation for points
+  // convex hull calculation for points
 const calculateConvexHull = (weeds) => {
-  // For simplicity, just create a buffer around the weeds
-  // In a real application, use a proper convex hull algorithm
   const bounds = calculateBounds(weeds);
   const expandedBounds = expandBounds(bounds, 0.00005); // Add 5 meter buffer
   
@@ -196,10 +197,12 @@ export const generateTreatmentPlan = (weedDetections, treatmentMethod) => {
   
   // generate a treatment plan object
   const plan = {
+    id: uuidv4(),
     method: treatmentMethod,
     areas: areas,
     createdAt: new Date().toISOString(),
     totalWeeds: weedDetections.length,
+    status: 'created'
   };
    console.log("Generated Plan:", plan);
 
@@ -284,7 +287,7 @@ export const calculateTreatmentStats = (weeds, method) => {
       
       const a = document.createElement('a');
       a.href = url;
-      a.download = `treatment-plan-${new Date().toISOString().slice(0,10)}.json`;
+      a.download = `treatment-plan-${currentTreatmentPlan.id}.json`;
       document.body.appendChild(a);
   
       console.log("Starting download...");
@@ -302,22 +305,105 @@ export const calculateTreatmentStats = (weeds, method) => {
   // Send treatment plan to backend
   export const saveTreatmentPlan = async (currentTreatmentPlan) => {
     if (!currentTreatmentPlan) {
-      alert("No treatment plan to save!");
+      console.error("Save failed: No treatment plan available.");
+      throw new Error("No treatment plan to save!");
       return;
     }
     
     try {
+      console.log("Saving treatment plan to database:", currentTreatmentPlan);
+
       const response = await fetch('http://127.0.0.1:5000/save_treatment_plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(currentTreatmentPlan),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Backend error response:', errorData);
+        throw new Error(errorData.message || 'Failed to save treatment plan');
+      }
       
       const result = await response.json();
       console.log('Backend response:', result);
-      alert('Treatment plan saved successfully!');
+      return result;
     } catch (error) {
       console.error('Error sending treatment plan to backend:', error);
-      alert('Failed to save treatment plan. Please try again.');
+      throw error;
     }
   };
+
+  // Retrieve treatment plan from database by ID
+export const fetchTreatmentPlanById = async (planId) => {
+  try {
+    console.log(`Fetching treatment plan with ID: ${planId}`);
+    
+    const response = await fetch(`http://127.0.0.1:5000/api/treatment-plans/${planId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Backend error response:', errorData);
+      throw new Error(errorData.message || `Failed to fetch treatment plan with ID ${planId}`);
+    }
+    
+    const plan = await response.json();
+    console.log('Retrieved plan:', plan);
+    return plan;
+  } catch (error) {
+    console.error(`Error fetching treatment plan with ID ${planId}:`, error);
+    throw error;
+  }
+};
+
+// Retrieve all treatment plans
+export const fetchAllTreatmentPlans = async () => {
+  try {
+    const response = await fetch('http://127.0.0.1:5000/api/treatment-plans', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Backend error response:', errorData);
+      throw new Error(errorData.message || 'Failed to fetch treatment plans');
+    }
+    
+    const plans = await response.json();
+    console.log('Retrieved all plans:', plans);
+    return plans;
+  } catch (error) {
+    console.error('Error fetching all treatment plans:', error);
+    throw error;
+  }
+};
+
+// Update treatment plan status
+export const updateTreatmentPlanStatus = async (planId, newStatus) => {
+  try {
+    console.log(`Updating treatment plan ${planId} status to: ${newStatus}`);
+    
+    const response = await fetch(`http://127.0.0.1:5000/api/treatment-plans/${planId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Backend error response:', errorData);
+      throw new Error(errorData.message || `Failed to update treatment plan status`);
+    }
+    
+    const updatedPlan = await response.json();
+    console.log('Updated plan:', updatedPlan);
+    return updatedPlan;
+  } catch (error) {
+    console.error(`Error updating treatment plan status:`, error);
+    throw error;
+  }
+};
