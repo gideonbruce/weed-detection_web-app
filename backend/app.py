@@ -138,7 +138,8 @@ def store_detections():
                 detection['latitude'],
                 detection['longitude'],
                 datetime.datetime.strptime(detection['timestamp'], "%Y-%m-%dT%H:%M:%S.%fZ"),
-                detection['confidence']
+                detection['confidence'],
+                "pending" #default mitigation status
             )
             cursor.execute(sql, values)
 
