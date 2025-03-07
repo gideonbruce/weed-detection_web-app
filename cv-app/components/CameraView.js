@@ -68,13 +68,12 @@ const App = () => {
       // This is a placeholder for the actual model loading code
       // The actual model files (model.json and weight files) should be included in your project
       
-      // Example:
-      // const modelJson = require('./assets/model/model.json');
-      // const modelWeights = [
-      //   require('./assets/model/group1-shard1of2.bin'),
-      //   require('./assets/model/group1-shard2of2.bin')
-      // ];
-      // const model = await tf.loadLayersModel(bundleResourceIO(modelJson, modelWeights));
+       const modelJson = require('./assets/model/model.json');
+       const modelWeights = [
+         require('./assets/model/group1-shard1of2.bin'),
+         require('./assets/model/group1-shard2of2.bin')
+       ];
+       const model = await tf.loadLayersModel(bundleResourceIO(modelJson, modelWeights));
       
       // For this example, we'll simulate a loaded model
       console.log('Model loaded');
