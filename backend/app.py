@@ -248,7 +248,20 @@ def mitigate_weed():
 
         cursor.execute(sql_insert, (detection_id, method, applied_by, notes))
 
-        #update
+        #update weed detections status
+        sql_update = """
+        UPDATE weed_detections
+        SET mitigation_status = 'completed', mitigation_timestamp = NOW()
+        WHERE id = %s
+        """
+
+        cursor.execute(sql_update, (detection_id,))
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        return jsonify({"message": "Mitigation recorded successfully"}), 201
 
     except Exception as e:
         print("Error:", str(e))
