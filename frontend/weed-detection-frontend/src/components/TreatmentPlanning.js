@@ -6,6 +6,7 @@ import TreatmentStats from './TreatmentStats';
 import TreatmentMap from './TreatmentMap';
 import { fetchWeedDetections, generateMockData } from './services/WeedService';
 import WeedMitigation from './Mitigation/WeedMitigation';
+import { useNavigate } from 'react-router-dom';
 import { 
   generateTreatmentPlan,
   calculateTreatmentStats,

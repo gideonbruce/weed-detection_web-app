@@ -26,6 +26,21 @@ const WeedMitigation = ({ treatmentPlanProp }) => {
   const [statusMessage, setStatusMessage] = useState('');
 
 
+  const updateTreatmentPlanStatus = async (planId, status) => {
+    try {
+      const response = await fetch(`/api/treatment-plans/${planId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+  
+      if (!response.ok) throw new Error("Failed to update treatment status");
+    } catch (err) {
+      console.error("Error updating treatment status:", err);
+      throw err;
+    }
+  };
+  
   const fetchTreatmentPlanById = async (planId) => {
     try {
       const response = await fetch(`/api/treatment-plans/${planId}`);
