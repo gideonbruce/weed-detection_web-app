@@ -9,12 +9,17 @@ import { sendTreatmentCommand } from './api';
 import { 
   validateTreatmentPlan, 
   calculateAreaCenter, 
-  calculatePolygonPoints 
+  calculatePolygonPoints,
+  fetchTreatmentPlanById,
+  updateTreatmentPlanStatus,
+  fetchAllTreatmentPlans
 } from './Utils';
 
-const WeedMitigation = ({ treatmentPlanProp }) => {
-  const { planId } = useParams();
+const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
+  const { planId: urlPlanId } = useParams();
   const navigate = useNavigate();
+
+  const effectivePlanId = planIdProp || urlPlanId;
   
   const [treatmentPlan, setTreatmentPlan] = useState(treatmentPlanProp || null);
   const [treatmentProgress, setTreatmentProgress] = useState(0);
@@ -63,7 +68,7 @@ const WeedMitigation = ({ treatmentPlanProp }) => {
       }
       
       // Otherwise, try to load it from the database using the planId from the URL
-      if (!planId) {
+      if (!effectivePlanId) {
         setError("No treatment plan ID provided.");
         setLoading(false);
         return;
@@ -71,10 +76,10 @@ const WeedMitigation = ({ treatmentPlanProp }) => {
       
       try {
         setLoading(true);
-        const fetchedPlan = await fetchTreatmentPlanById(planId);
+        const fetchedPlan = await fetchTreatmentPlanById(effectivePlanId);
         
         if (!fetchedPlan) {
-          throw new Error(`Treatment plan with ID ${planId} not found.`);
+          throw new Error(`Treatment plan with ID ${effectivePlanId} not found.`);
         }
         
         setTreatmentPlan(fetchedPlan);
@@ -99,7 +104,7 @@ const WeedMitigation = ({ treatmentPlanProp }) => {
     };
 
     loadTreatmentPlan();
-  }, [planId, treatmentPlanProp]);
+  }, [effectivePlanId, treatmentPlanProp]);
 
   useEffect(() => {
     const initializeTreatmentPlan = async () => {
