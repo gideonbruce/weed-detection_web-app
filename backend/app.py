@@ -228,13 +228,17 @@ def reset_password():
 @app.route('/treatment-plans', methods=['POST'])
 def create_treatment_plan():
     try:
-        data = request.json
+        data = request.get_json()
         method = data.get('method')
         areas = data.get('areas')
         total_weeds = data.get('total_weeds')
 
         if not data or "method" not in data or "areas" not in data or "total_weeds" not in data:
             return jsonify({"error": "Missing required fields"}), 400
+        
+        method = data["method"]
+        areas = json.dumps(data["areas"])
+        total_weeds = int(data["total_weeds"])
         
         print("Recieved data:", data)
 
@@ -245,7 +249,7 @@ def create_treatment_plan():
         INSERT INTO treatment_plans (method, areas, total_weeds)
         VALUES (%s, %s, %s)
         """
-        cursor.execute(sql, (method, json.dumps(areas), total_weeds))
+        cursor.execute(sql, (method, areas, total_weeds))
 
         connection.commit()
         cursor.close()
@@ -270,8 +274,8 @@ def get_treatment_plans():
         cursor.execute("SELECT * FROM treatment_plans")
         plans = cursor.fetchall()
 
-        for plan in plans:
-            plan["areas"] = json.loads(plan["areas"])  # Convert JSON string to list
+        #for plan in plans:
+            #plan["areas"] = json.loads(plan["areas"])  # Convert JSON string to list
 
 
         cursor.close()
