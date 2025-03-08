@@ -339,7 +339,7 @@ export const fetchTreatmentPlanById = async (planId) => {
   try {
     console.log(`Fetching treatment plan with ID: ${planId}`);
     
-    const response = await fetch(`http://127.0.0.1:5000/api/treatment-plans/${planId}`, {
+    const response = await fetch(`http://127.0.0.1:5000/treatment-plans/${planId}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -362,7 +362,7 @@ export const fetchTreatmentPlanById = async (planId) => {
 // Retrieve all treatment plans
 export const fetchAllTreatmentPlans = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:5000/api/treatment-plans', {
+    const response = await fetch('http://127.0.0.1:5000/treatment-plans', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
