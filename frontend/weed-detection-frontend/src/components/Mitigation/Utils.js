@@ -41,7 +41,64 @@ export const calculateAreaCenter = (area) => {
   console.warn(`[WARN] Could not calculate center, using default [0, 0]`);
     
   return [0, 0]; // Default fallback
-  };
+};
+
+export const fetchTreatmentPlanById = async (planId) => {
+  try {
+    console.log(`[DEBUG] Fetching treatment plan with ID: ${planId}`);
+    const response = await fetch(`/treatment-plans/${planId}`);
+    
+    if (!response.ok) {
+      console.error(`[ERROR] Failed to fetch treatment plan: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch treatment plan: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`[DEBUG] Raw treatment plan data received:`, data);
+    
+    // Check if data has the required structure
+    if (!data) {
+      console.error(`[ERROR] Treatment plan data is null or undefined`);
+    } else if (!data.areas) {
+      console.warn(`[WARN] Treatment plan has no areas property, adding empty array`);
+      data.areas = [];
+    } else if (!Array.isArray(data.areas)) {
+      console.warn(`[WARN] Treatment plan areas is not an array, converting`, data.areas);
+      data.areas = [data.areas];
+    } else {
+      console.log(`[DEBUG] Treatment plan has ${data.areas.length} areas`);
+    }
+    
+    console.log(`[DEBUG] Processed treatment plan data:`, data);
+    return data;
+  } catch (err) {
+    console.error(`[ERROR] Error fetching treatment plan:`, err);
+    throw err;
+  }
+};
+
+export const sendTreatmentCommand = async (treatmentPlan) => {
+  try {
+    console.log(`[DEBUG] Sending treatment command:`, treatmentPlan);
+    // Replace with actual API call
+    const response = await fetch('http://127.0.0.1:5000/mitigate_weed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(treatmentPlan),
+    });
+    
+    if (!response.ok) {
+      console.error(`[ERROR] Treatment command failed with status: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`[DEBUG] Treatment command response:`, data);
+    return data;
+  } catch (error) {
+    console.error(`[ERROR] Error sending treatment command:`, error);
+    return { success: false, message: `Failed to send treatment command: ${error.message}` };
+  }
+};
   
 
   export const calculatePolygonPoints = (area) => {
@@ -140,6 +197,7 @@ export const calculateAreaCenter = (area) => {
 // Retrieve all treatment plans
 export const fetchAllTreatmentPlans = async () => {
   try {
+    console.log(`DEBUG] Fetching all treatment plans`);
     const response = await fetch('http://127.0.0.1:5000/treatment-plans', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
@@ -147,15 +205,29 @@ export const fetchAllTreatmentPlans = async () => {
     
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Backend error response:', errorData);
+      console.error(`[Error] Backend error response:`, errorData);
       throw new Error(errorData.message || 'Failed to fetch treatment plans');
     }
     
     const plans = await response.json();
-    console.log('Retrieved all plans:', plans);
+    console.log(`[DEBUG] Retrieved ${plans.length} plans:`, plans);
+
+    // Process plans to ensure they have the right structure
+    plans.forEach((plan, index) => {
+      if (!plan.areas) {
+        console.warn(`[WARN] Plan ${index} has no areas property, adding empty array`);
+        plan.areas = [];
+      } else if (!Array.isArray(plan.areas)) {
+        console.warn(`[WARN] Plan ${index} areas is not an array, converting`, plan.areas);
+        plan.areas = [plan.areas];
+      }
+    });
+    
+    console.log(`[DEBUG] Processed plans:`, plans);
+
     return plans;
   } catch (error) {
-    console.error('Error fetching all treatment plans:', error);
+    console.error(`[ERROR] Error fetching all treatment plans:`, error);
     throw error;
   }
 };
