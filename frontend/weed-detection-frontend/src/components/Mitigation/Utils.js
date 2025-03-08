@@ -1,22 +1,33 @@
+/**
+ * Calculates the center of a treatment area
+ * @param {Object} area - The treatment area object
+ * @returns {Array} - [Latitude, longitude] pair for the center
+ */
 
 export const calculateAreaCenter = (area) => {
-    if (area.center && Array.isArray(area.center) && area.center.length === 2) {
-      return area.center;
+  // if area has explicit center use it
+    if (area.center && typeof area.center.latitude === 'number' && typeof area.center.longitude === 'number') {
+      return [area.center.latitude, area.center.longitude];
     }
-    
+
+    // if area has bounds use center of th ebounds
+    if (area.points && area.bounds.southWest && area.bounds.northEast) {
+       const { southWest, northEast } = area.bounds;
+       return [
+        (southWest.latitude + northEast.latitude) / 2,
+        (southWest.longitude + northEast.longitude) /2
+       ];
+    }
+    // if area has points, calculate the centroid
     if (area.points && Array.isArray(area.points) && area.points.length > 0) {
-      // Calculate center from points
-      const sumLat = area.points.reduce((sum, point) => sum + point[0], 0);
-      const sumLng = area.points.reduce((sum, point) => sum + point[1], 0);
-      return [sumLat / area.points.length, sumLng / area.points.length];
-    }
-    
-    if (area.bounds && area.bounds.southWest && area.bounds.northEast) {
-      // Calculate center from bounds
-      return [
-        (area.bounds.southWest[0] + area.bounds.northEast[0]) / 2,
-        (area.bounds.southWest[1] + area.bounds.northEast[1]) / 2
-      ];
+      const validPoints = area.points.filter(point =>
+        point && typeof point.latitude === 'number' && typeof point.longitude === 'number'
+      );
+      if (validPoints.length > 0) {
+        const sumLat = validPoints.reduce((sum, point) => sum + point.latitude, 0);
+        const sumLng = validPoints.reduce((sum, point) => sum + point.longitude, 0);
+        return [sumLat / validPoints.length, sumLng / validPoints.length];
+      }
     }
     
     return [0, 0]; // Default fallback
