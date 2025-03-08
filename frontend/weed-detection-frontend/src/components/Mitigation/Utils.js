@@ -24,8 +24,11 @@ export const calculateAreaCenter = (area) => {
   
 
   export const calculatePolygonPoints = (area) => {
-    if (area.points && Array.isArray(area.points) && area.points.length >= 3) {
-      return area.points;
+    // if area already has points use them
+    if (area.points && Array.isArray(area.points) && area.points.length > 0) {
+      return area.points.filter(point =>
+        point && typeof point.latitude === 'number' && typeof point.longitude === 'number'
+      ).map(point => [point.latitude, point.longitude]);
     }
     
     if (area.bounds && area.bounds.southWest && area.bounds.northEast) {
