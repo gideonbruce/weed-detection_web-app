@@ -19,7 +19,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
   const { planId: urlPlanId } = useParams();
   const navigate = useNavigate();
 
-  const effectivePlanId = planIdProp || urlPlanId;
+  const planId = planIdProp || urlPlanId;
   
   const [treatmentPlan, setTreatmentPlan] = useState(treatmentPlanProp || null);
   const [treatmentProgress, setTreatmentProgress] = useState(0);
@@ -69,17 +69,43 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       
       // Otherwise, try to load it from the database using the planId from the URL
       if (!planId) {
-        setError("No treatment plan ID provided.");
-        setLoading(false);
+        try {
+          setLoading(true);
+          const allPlans = await fetchAllTreatmentPlans();
+
+          if (!allPlans || allPlans.length === 0) {
+            setError("No treatment plans found in the database.");
+            setLoading(false);
+            return;
+          }
+
+          const firstPlan = allPlans[0];
+          setTreatmentPlan(firstPlan);
+
+          if (firstPlan.status === 'completed') {
+            setTreatmentStatus('completed');
+            setTreatmentProgress(100);
+            setStatusMessage('This treatment has already been completed.');
+          } else if (firstPlan.status === 'in-progress') {
+            setTreatmentStatus('inProgress');
+            setTreatmentProgress(50);
+            setStatusMessage('Treatment is currently in progress.');
+          }
+          setLoading(false);
+        } catch (err) {
+          console.error('Error loading treatment plans:', err);
+          setError("No treatment plan ID provided and failed to load default plan.");
+          setLoading(false);
+        }
         return;
       }
       
       try {
         setLoading(true);
-        const fetchedPlan = await fetchTreatmentPlanById(effectivePlanId);
+        const fetchedPlan = await fetchTreatmentPlanById(planId);
         
         if (!fetchedPlan) {
-          throw new Error(`Treatment plan with ID ${effectivePlanId} not found.`);
+          throw new Error(`Treatment plan with ID ${planId} not found.`);
         }
         
         setTreatmentPlan(fetchedPlan);
@@ -104,7 +130,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
     };
 
     loadTreatmentPlan();
-  }, [effectivePlanId, treatmentPlanProp]);
+  }, [planId, treatmentPlanProp]);
 
   useEffect(() => {
     const initializeTreatmentPlan = async () => {

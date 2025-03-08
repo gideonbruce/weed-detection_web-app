@@ -66,3 +66,26 @@ export const calculateAreaCenter = (area) => {
     
     return null;
   };
+
+// Retrieve all treatment plans
+export const fetchAllTreatmentPlans = async () => {
+  try {
+    const response = await fetch('http://127.0.0.1:5000/treatment-plans', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Backend error response:', errorData);
+      throw new Error(errorData.message || 'Failed to fetch treatment plans');
+    }
+    
+    const plans = await response.json();
+    console.log('Retrieved all plans:', plans);
+    return plans;
+  } catch (error) {
+    console.error('Error fetching all treatment plans:', error);
+    throw error;
+  }
+};
