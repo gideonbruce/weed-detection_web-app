@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Polygon } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapUpdater } from './MapUpdater';
 
-export const TreatmentMap = ({ areas, centerPosition, zoom, calculatePolygonPoints }) => {
+export const TreatmentMap = ({ areas = [], centerPosition = [0, 0], zoom = 16, calculatePolygonPoints }) => {
   return (
     <div className="border rounded-lg overflow-hidden mt-4">
       <MapContainer
