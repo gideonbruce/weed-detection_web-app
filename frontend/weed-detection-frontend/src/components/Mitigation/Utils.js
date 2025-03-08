@@ -325,6 +325,11 @@ export const ensureValidTreatmentPlan = (plan) => {
   }
 
   // fixing nested arrays to objetcs
+  if (processedPlan.areas.length > 0 && Array.isArray(processedPlan.areas[0])) {
+    console.warn('[WARN] Treatment plan areas contains a nested array, flattening', processedPlan.areas);
+    processedPlan.areas = processedPlan.areas[0];
+  }
+
   // Process each area to ensure it has minimum valid properties
   processedPlan.areas = processedPlan.areas.map((area, index) => {
     if (!area || typeof area !== 'object') {
@@ -339,6 +344,15 @@ export const ensureValidTreatmentPlan = (plan) => {
     //area has type
     if (!area.type) {
       area.type = 'polygon';
+    }
+
+    // convert center from array to object
+    if (area.center && Array.isArray(area.center) && area.center.length >= 2) {
+      area.center = {
+        latitude: area.center[0],
+        longitude: area.center[1]
+      };
+      console.log(`[DEBUG] Converted center array to object for area ${index + 1}:`, area.center);
     }
     return area;
   });
