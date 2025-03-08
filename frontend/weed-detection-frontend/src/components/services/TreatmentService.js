@@ -307,16 +307,22 @@ export const calculateTreatmentStats = (weeds, method) => {
     if (!currentTreatmentPlan) {
       console.error("Save failed: No treatment plan available.");
       throw new Error("No treatment plan to save!");
-      return;
     }
     
     try {
-      console.log("Saving treatment plan to database:", currentTreatmentPlan);
+      // formatting data for backend
+      const formattedData = {
+        method: currentTreatmentPlan.method,
+        areas: currentTreatmentPlan.areas,
+        total_weeds: currentTreatmentPlan.totalWeeds
+      };
+
+      console.log("Saving treatment plan to database:", formattedData);
 
       const response = await fetch('http://127.0.0.1:5000/treatment-plans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentTreatmentPlan),
+        body: JSON.stringify(formattedData),
       });
 
       if (!response.ok) {
