@@ -15,9 +15,10 @@ export const calculateAreaCenter = (area) => {
     // if area has bounds use center of th ebounds
   if (area.points && area.bounds.southWest && area.bounds.northEast) {
       const { southWest, northEast } = area.bounds;
-      return [
-      (southWest.latitude + northEast.latitude) / 2,
-      (southWest.longitude + northEast.longitude) /2
+      console.log(`[DEBUG] Using bounds for center calculation:`, area.bounds);
+      const center =  [
+        (southWest.latitude + northEast.latitude) / 2,
+        (southWest.longitude + northEast.longitude) /2
       ];
       console.log(`[DEBUG] Calculated center from bounds: [${center[0]}, ${center[1]}]`);
       return center;
@@ -150,49 +151,119 @@ export const sendTreatmentCommand = async (treatmentPlan) => {
     return []; // Empty array if invalid
   };
 
-  export const validateTreatmentPlan = (plan) => {
-    if (!plan) { console.error('Treatment plan is missing'); return 'Treatment plan is missing'; }
-    if (typeof plan !== 'object') {
-      console.error('Treatment plan is not an object');
-      return 'Treatment plan is invalid (not an object)';
-    }
-    if (typeof plan !== 'object') {
-      console.error('Treatment plan is not an object');
-      return 'Treatment plan is invalid (not an object)';
-    }
-    if (!plan.areas) {
-      console.warn('Plan missing areas property, creating empty array');
-      plan.areas = [];
-    }
-    if (!plan.areas || !Array.isArray(plan.areas))
-       return 'Treatment areas are missing or invalid';
-    if (plan.areas.length === 0) {
-      console.warn('No treatment areas defined');
-      return 'No treatment areas defined';
+export const validateTreatmentPlan = (plan) => {
+  // Basic null/undefined check
+  if (!plan) {
+    console.error('Treatment plan is missing');
+    return 'Treatment plan is missing';
+  }
+  
+  // Check plan object type
+  if (typeof plan !== 'object') {
+    console.error('Treatment plan is not an object');
+    return 'Treatment plan is invalid (not an object)';
+  }
+  
+  // Initialize areas if missing
+  if (!plan.areas) {
+    console.warn('Plan missing areas property, creating empty array');
+    plan.areas = [];
+  }
+  
+  // Convert single area to array if needed
+  if (!Array.isArray(plan.areas) && typeof plan.areas === 'object') {
+    console.warn('Plan areas is not an array, converting to array', plan.areas);
+    plan.areas = [plan.areas];
+  } else if (!Array.isArray(plan.areas)) {
+    console.error('Plan areas is invalid (not array or object):', plan.areas);
+    return 'Treatment areas are missing or invalid';
+  }
+  
+  // Check if there are any areas defined
+  if (plan.areas.length === 0) {
+    console.warn('No treatment areas defined');
+    return 'No treatment areas defined';
+  }
+  
+  // Validate each area
+  for (let i = 0; i < plan.areas.length; i++) {
+    const area = plan.areas[i];
+    
+    // Check if area is an object
+    if (!area || typeof area !== 'object') {
+      console.error(`Area ${i + 1} is not a valid object`);
+      return `Area ${i + 1} is invalid`;
     }
     
-
-    for (let i = 0; i < plan.areas.length; i++) {
-      const area = plan.areas[i];
-      if (!area.type) return `Area ${i + 1} is missing type`;
-      
-      // Check if the area has valid points or bounds
-      const hasValidPoints = area.points && Array.isArray(area.points) && area.points.length >= 3;
-      const hasValidBounds = area.bounds && 
-                             area.bounds.southWest && 
-                             area.bounds.northEast && 
-                             typeof area.bounds.southWest.latitude === 'number' &&
-                             typeof area.bounds.southWest.longitude === 'number' &&
-                             typeof area.bounds.northEast.latitude === 'number' &&
-                             typeof area.bounds.northEast.longitude === 'number';
-                             
-      if (!hasValidPoints && !hasValidBounds) {
-        return `Area ${i + 1} has invalid geometry (missing points or bounds)`;
+    // Check for type property
+    if (!area.type) {
+      console.error(`Area ${i + 1} is missing type`);
+      return `Area ${i + 1} is missing type`;
+    }
+    
+    // Check for valid points
+    let hasValidPoints = false;
+    if (area.points) {
+      if (Array.isArray(area.points)) {
+        if (area.points.length >= 3) {
+          const validPoints = area.points.filter(point => 
+            point && 
+            typeof point === 'object' && 
+            typeof point.latitude === 'number' && 
+            typeof point.longitude === 'number'
+          );
+          
+          hasValidPoints = validPoints.length >= 3;
+          
+          if (area.points.length > 0 && validPoints.length === 0) {
+            console.error(`Area ${i + 1} has points, but none are valid`);
+          }
+        } else {
+          console.warn(`Area ${i + 1} has less than 3 points`);
+        }
+      } else {
+        console.error(`Area ${i + 1} points is not an array`);
       }
     }
     
-    return null;
-  };
+    // Check for valid bounds
+    let hasValidBounds = false;
+    if (area.bounds) {
+      if (area.bounds.southWest && area.bounds.northEast) {
+        const { southWest, northEast } = area.bounds;
+        
+        if (typeof southWest === 'object' && typeof northEast === 'object') {
+          hasValidBounds = typeof southWest.latitude === 'number' &&
+                            typeof southWest.longitude === 'number' &&
+                            typeof northEast.latitude === 'number' &&
+                            typeof northEast.longitude === 'number';
+        } else {
+          console.error(`Area ${i + 1} bounds coordinates are not objects`);
+        }
+      } else {
+        console.error(`Area ${i + 1} bounds is missing southWest or northEast`);
+      }
+    }
+    
+    // Check for valid center & radius
+    let hasValidCircle = false;
+    if (area.center && typeof area.radius === 'number') {
+      if (typeof area.center === 'object') {
+        hasValidCircle = typeof area.center.latitude === 'number' && 
+                          typeof area.center.longitude === 'number' &&
+                          area.radius > 0;
+      }
+    }
+    
+    // Ensure at least one valid geometry type
+    if (!hasValidPoints && !hasValidBounds && !hasValidCircle) {
+      console.error(`Area ${i + 1} has invalid geometry (missing valid points, bounds, or center+radius)`);
+      return `Area ${i + 1} has invalid geometry`;
+    }
+  }
+  
+  return null; // No validation errors
+};
 
 // Retrieve all treatment plans
 export const fetchAllTreatmentPlans = async () => {
