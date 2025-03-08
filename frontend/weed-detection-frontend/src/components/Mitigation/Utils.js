@@ -154,28 +154,29 @@ export const sendTreatmentCommand = async (treatmentPlan) => {
 export const validateTreatmentPlan = (plan) => {
   // Basic null/undefined check
   if (!plan) {
-    console.error('Treatment plan is missing');
+    console.error('[ERROR] Treatment plan is missing');
     return 'Treatment plan is missing';
   }
   
   // Check plan object type
   if (typeof plan !== 'object') {
-    console.error('Treatment plan is not an object');
+    console.error('[ERROR] Treatment plan is not an object');
     return 'Treatment plan is invalid (not an object)';
   }
   
   // Initialize areas if missing
   if (!plan.areas) {
-    console.warn('Plan missing areas property, creating empty array');
+    console.warn('[WARN] Plan missing areas property, creating empty array');
     plan.areas = [];
+    return 'No treatment areas defined';
   }
   
   // Convert single area to array if needed
   if (!Array.isArray(plan.areas) && typeof plan.areas === 'object') {
-    console.warn('Plan areas is not an array, converting to array', plan.areas);
+    console.warn('[WARN] Plan areas is not an array, converting to array', plan.areas);
     plan.areas = [plan.areas];
   } else if (!Array.isArray(plan.areas)) {
-    console.error('Plan areas is invalid (not array or object):', plan.areas);
+    console.error('[ERROR] Plan areas is invalid (not array or object):', plan.areas);
     return 'Treatment areas are missing or invalid';
   }
   
@@ -191,21 +192,26 @@ export const validateTreatmentPlan = (plan) => {
     
     // Check if area is an object
     if (!area || typeof area !== 'object') {
-      console.error(`Area ${i + 1} is not a valid object`);
+      console.error(`[ERROR] Area ${i + 1} is not a valid object:`, area);
       return `Area ${i + 1} is invalid`;
     }
     
     // Check for type property
     if (!area.type) {
-      console.error(`Area ${i + 1} is missing type`);
+      console.error(`Area ${i + 1} is missing type, defaulting to polygon`);
+      area.type = 'polygon';
       return `Area ${i + 1} is missing type`;
     }
+
+    let hasValidGeometry = false;
     
     // Check for valid points
-    let hasValidPoints = false;
+    //let hasValidPoints = false;
     if (area.points) {
       if (Array.isArray(area.points)) {
-        if (area.points.length >= 3) {
+        const minPoints = area.type === 'polygon' ? 3 : 2;
+
+        if (area.points.length >= minPoints) {
           const validPoints = area.points.filter(point => 
             point && 
             typeof point === 'object' && 
@@ -213,16 +219,16 @@ export const validateTreatmentPlan = (plan) => {
             typeof point.longitude === 'number'
           );
           
-          hasValidPoints = validPoints.length >= 3;
+          hasValidGeometry = validPoints.length >= minPoints;
           
-          if (area.points.length > 0 && validPoints.length === 0) {
-            console.error(`Area ${i + 1} has points, but none are valid`);
+          if (area.points.length > 0 && validPoints.length < minPoints) {
+            console.error(`[ERROR] Area ${i + 1} has points, but none are valid (${validPoints.length}/${minPoints} needed)`);
           }
         } else {
           console.warn(`Area ${i + 1} has less than 3 points`);
         }
       } else {
-        console.error(`Area ${i + 1} points is not an array`);
+        console.error(`[ERROR] Area ${i + 1} points is not an array:`, area.points);
       }
     }
     
@@ -266,7 +272,41 @@ export const validateTreatmentPlan = (plan) => {
 };
 
 export const ensureValidTreatmentPlan = (plan) => {
-  
+  if (!plan) return null;
+
+  const processedPlan = { ...plan };
+
+  if (!processedPlan.id) {
+    console.warn(`[WARN] Treatment plan has no ID, generating temporary ID`);
+    processedPlan.id = 'temp-' + Math.random().toString(36).substring(2, 15);
+  }
+  // Ensure areas property exists and is an array
+  if (!processedPlan.areas) {
+    console.warn('[WARN] Treatment plan has no areas, adding empty array');
+    processedPlan.areas = [];
+  } else if (!Array.isArray(processedPlan.areas)) {
+    console.warn('[WARN] Treatment plan areas is not an array, converting', processedPlan.areas);
+    processedPlan.areas = [processedPlan.areas];
+  }
+  // Process each area to ensure it has minimum valid properties
+  processedPlan.areas = processedPlan.areas.map((area, index) => {
+    if (!area || typeof area !== 'object') {
+      console.warn(`[WARN] Area ${index + 1} is not a valid object, creating default`);
+      return {
+        type: 'polygon',
+        center: { latitude: 0, longitude: 0 },
+        radius: 100
+      };
+    }
+
+    //area has type
+    if (!area.type) {
+      area.type = 'polygon';
+    }
+    return area;
+  });
+
+  return processedPlan;
 }
 
 // Retrieve all treatment plans
