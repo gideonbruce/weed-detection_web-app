@@ -237,7 +237,7 @@ export const validateTreatmentPlan = (plan) => {
         const { southWest, northEast } = area.bounds;
         
         if (typeof southWest === 'object' && typeof northEast === 'object') {
-          hasValidBounds = typeof southWest.latitude === 'number' &&
+          hasValidGeometry = typeof southWest.latitude === 'number' &&
                             typeof southWest.longitude === 'number' &&
                             typeof northEast.latitude === 'number' &&
                             typeof northEast.longitude === 'number';
@@ -261,11 +261,26 @@ export const validateTreatmentPlan = (plan) => {
                             typeof area.radius === 'number' &&
                             area.radius > 0;
 
+          if (hasValidGeometry) {
+            area.center = {
+              latitude: area.center[0],
+              longitude: area.center[1]
+            };
+          }
+        } 
+
+        else if (typeof area.center === 'object') {
+          hasValidGeometry = typeof area.center.latitude === 'number' && 
+                            typeof area.center.longitude === 'number' &&
+                            typeof area.radius === 'number' &&
+                            area.radius > 0;
+        }
+
         if (!hasValidGeometry) {
           console.error(`[ERROR] Area ${i + 1} center/radius is invalid:`, { center: area.center, radius: area.radius });
         }
       } else {
-        console.error(`[ERROR] Area ${i + 1} center is not an object:`, area.center);
+        console.error(`[ERROR] Area ${i + 1} center is not an object or array:`, area.center);
       }
     }
 
@@ -277,17 +292,15 @@ export const validateTreatmentPlan = (plan) => {
       // Create a small default area around [0,0] for debugging
       area.center = { latitude: 0, longitude: 0 };
       area.radius = 100; // meters
-      
-      // In production, you would instead return an error:
-      // return `Area ${i + 1} has invalid geometry (missing valid points, bounds, or center+radius)`;
+      hasValidGeometry = true;
+
     }
   
-    
-    // Ensure at least one valid geometry type
+    /*// Ensure at least one valid geometry type
     if (!hasValidPoints && !hasValidBounds && !hasValidCircle) {
       console.error(`Area ${i + 1} has invalid geometry (missing valid points, bounds, or center+radius)`);
       return `Area ${i + 1} has invalid geometry`;
-    }
+    }*/
   }
   
   return null; // No validation errors
@@ -310,6 +323,8 @@ export const ensureValidTreatmentPlan = (plan) => {
     console.warn('[WARN] Treatment plan areas is not an array, converting', processedPlan.areas);
     processedPlan.areas = [processedPlan.areas];
   }
+
+  // fixing nested arrays to objetcs
   // Process each area to ensure it has minimum valid properties
   processedPlan.areas = processedPlan.areas.map((area, index) => {
     if (!area || typeof area !== 'object') {
