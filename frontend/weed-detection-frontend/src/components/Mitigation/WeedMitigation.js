@@ -68,7 +68,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       }
       
       // Otherwise, try to load it from the database using the planId from the URL
-      if (!effectivePlanId) {
+      if (!planId) {
         setError("No treatment plan ID provided.");
         setLoading(false);
         return;
