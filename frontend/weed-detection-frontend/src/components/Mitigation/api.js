@@ -18,7 +18,7 @@ export const sendTreatmentCommand = async (treatmentPlan) => {
 
 export  const fetchTreatmentPlanById = async (planId) => {
     try {
-      const response = await fetch(`/api/treatment-plans/${planId}`);
+      const response = await fetch(`/treatment-plans/${planId}`);
       if (!response.ok) throw new Error("Failed to fetch treatment plan");
       return await response.json();
     } catch (err) {
@@ -29,7 +29,7 @@ export  const fetchTreatmentPlanById = async (planId) => {
 
   export const saveTreatmentPlan = async (planData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/treatment-plans', {
+      const response = await fetch('http://localhost:5000/treatment-plans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

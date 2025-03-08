@@ -84,10 +84,27 @@ export const calculateAreaCenter = (area) => {
   };
 
   export const validateTreatmentPlan = (plan) => {
-    if (!plan) return 'Treatment plan is missing';
-    if (!plan.areas || !Array.isArray(plan.areas)) return 'Treatment areas are missing or invalid';
-    if (plan.areas.length === 0) return 'No treatment areas defined';
+    if (!plan) { console.error('Treatment plan is missing'); return 'Treatment plan is missing'; }
+    if (typeof plan !== 'object') {
+      console.error('Treatment plan is not an object');
+      return 'Treatment plan is invalid (not an object)';
+    }
+    if (typeof plan !== 'object') {
+      console.error('Treatment plan is not an object');
+      return 'Treatment plan is invalid (not an object)';
+    }
+    if (!plan.areas) {
+      console.warn('Plan missing areas property, creating empty array');
+      plan.areas = [];
+    }
+    if (!plan.areas || !Array.isArray(plan.areas))
+       return 'Treatment areas are missing or invalid';
+    if (plan.areas.length === 0) {
+      console.warn('No treatment areas defined');
+      return 'No treatment areas defined';
+    }
     
+
     for (let i = 0; i < plan.areas.length; i++) {
       const area = plan.areas[i];
       if (!area.type) return `Area ${i + 1} is missing type`;
@@ -97,10 +114,10 @@ export const calculateAreaCenter = (area) => {
       const hasValidBounds = area.bounds && 
                              area.bounds.southWest && 
                              area.bounds.northEast && 
-                             Array.isArray(area.bounds.southWest) && 
-                             Array.isArray(area.bounds.northEast) &&
-                             area.bounds.southWest.length === 2 &&
-                             area.bounds.northEast.length === 2;
+                             typeof area.bounds.southWest.latitude === 'number' &&
+                             typeof area.bounds.southWest.longitude === 'number' &&
+                             typeof area.bounds.northEast.latitude === 'number' &&
+                             typeof area.bounds.northEast.longitude === 'number';
                              
       if (!hasValidPoints && !hasValidBounds) {
         return `Area ${i + 1} has invalid geometry (missing points or bounds)`;

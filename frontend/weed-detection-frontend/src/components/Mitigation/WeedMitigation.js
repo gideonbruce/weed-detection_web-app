@@ -48,12 +48,15 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
   
   const fetchTreatmentPlanById = async (planId) => {
     try {
-      const response = await fetch(`/api/treatment-plans/${planId}`);
+      const response = await fetch(`/treatment-plans/${planId}`);
       if (!response.ok) throw new Error("Failed to fetch treatment plan");
 
       const data = await response.json();
-      if (!data.areas || !Array.isArray(data.areas)) {
+
+      if (!data.areas) {
         data.areas = [];
+      } else if (!Array.isArray(data.areas)) {
+        data.areas = [data.areas];
       }
       return data;
     } catch (err) {
@@ -67,6 +70,11 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
     const loadTreatmentPlan = async () => {
       // If we already have a treatment plan from props, use it
       if (treatmentPlanProp) {
+        if (!treatmentPlanProp.areas) {
+          treatmentPlanProp.areas = [];
+        } else if (!Array.isArray(treatmentPlanProp.areas)) {
+          treatmentPlanProp.areas = [treatmentPlanProp.areas];
+        }
         setTreatmentPlan(treatmentPlanProp);
         setLoading(false);
         return;
