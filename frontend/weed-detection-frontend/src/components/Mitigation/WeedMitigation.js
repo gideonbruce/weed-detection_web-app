@@ -5,14 +5,15 @@ import { TreatmentTable } from './TreatmentTable';
 import { TreatmentStatus } from './TreatmentStatus';
 import { LoadingState } from './LoadingState';
 import { ErrorState } from './ErrorState';
-import { sendTreatmentCommand } from './api';
 import { 
   validateTreatmentPlan, 
   calculateAreaCenter, 
   calculatePolygonPoints,
   fetchTreatmentPlanById,
   updateTreatmentPlanStatus,
-  fetchAllTreatmentPlans
+  fetchAllTreatmentPlans,
+  sendTreatmentCommand,
+  debugObjectProperties
 } from './Utils';
 
 const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
@@ -30,37 +31,30 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
   const [treatmentStatus, setTreatmentStatus] = useState('pending'); // pending, inProgress, completed, error
   const [statusMessage, setStatusMessage] = useState('');
 
+  // Debug logging for component initialization
+  useEffect(() => {
+    console.log("[DEBUG] WeedMitigation component initialized");
+    console.log("[DEBUG] planId:", planId);
+    console.log("[DEBUG] treatmentPlanProp:", treatmentPlanProp);
+  }, []);
 
   const updateTreatmentPlanStatus = async (planId, status) => {
     try {
+      console.log(`[DEBUG] Updating treatment plan ${planId} status to ${status}`);
       const response = await fetch(`/api/treatment-plans/${planId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
   
-      if (!response.ok) throw new Error("Failed to update treatment status");
-    } catch (err) {
-      console.error("Error updating treatment status:", err);
-      throw err;
-    }
-  };
-  
-  const fetchTreatmentPlanById = async (planId) => {
-    try {
-      const response = await fetch(`/treatment-plans/${planId}`);
-      if (!response.ok) throw new Error("Failed to fetch treatment plan");
-
-      const data = await response.json();
-
-      if (!data.areas) {
-        data.areas = [];
-      } else if (!Array.isArray(data.areas)) {
-        data.areas = [data.areas];
+      if (!response.ok) {
+        console.error(`[ERROR] Failed to update treatment status: ${response.status} ${response.statusText}`);
+        throw new Error("Failed to update treatment status");
       }
-      return data;
+      
+      console.log(`[DEBUG] Treatment status updated successfully`);
     } catch (err) {
-      console.error("Error fetching treatment plan:", err);
+      console.error("[ERROR] Error updating treatment status:", err);
       throw err;
     }
   };
@@ -68,14 +62,24 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
   // Fetch the treatment plan from the database if it was not passed as a prop
   useEffect(() => {
     const loadTreatmentPlan = async () => {
+      console.log("[DEBUG] loadTreatmentPlan called");
+      
       // If we already have a treatment plan from props, use it
       if (treatmentPlanProp) {
-        if (!treatmentPlanProp.areas) {
-          treatmentPlanProp.areas = [];
-        } else if (!Array.isArray(treatmentPlanProp.areas)) {
-          treatmentPlanProp.areas = [treatmentPlanProp.areas];
+        console.log("[DEBUG] Using treatment plan from props");
+        debugObjectProperties(treatmentPlanProp, "treatmentPlanProp");
+        
+        // Ensure the plan has the required structure
+        const processedPlan = { ...treatmentPlanProp };
+        if (!processedPlan.areas) {
+          console.warn("[WARN] Treatment plan from props has no areas, adding empty array");
+          processedPlan.areas = [];
+        } else if (!Array.isArray(processedPlan.areas)) {
+          console.warn("[WARN] Treatment plan from props has non-array areas, converting", processedPlan.areas);
+          processedPlan.areas = [processedPlan.areas];
         }
-        setTreatmentPlan(treatmentPlanProp);
+        
+        setTreatmentPlan(processedPlan);
         setLoading(false);
         return;
       }
@@ -83,16 +87,29 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       // Otherwise, try to load it from the database using the planId from the URL
       if (!planId) {
         try {
+          console.log("[DEBUG] No planId provided, attempting to fetch all plans");
           setLoading(true);
           const allPlans = await fetchAllTreatmentPlans();
 
           if (!allPlans || allPlans.length === 0) {
+            console.error("[ERROR] No treatment plans found in the database");
             setError("No treatment plans found in the database.");
             setLoading(false);
             return;
           }
 
+          console.log("[DEBUG] Using first plan from list:", allPlans[0]);
           const firstPlan = allPlans[0];
+          
+          // Ensure the plan has the required structure
+          if (!firstPlan.areas) {
+            console.warn("[WARN] First plan has no areas, adding empty array");
+            firstPlan.areas = [];
+          } else if (!Array.isArray(firstPlan.areas)) {
+            console.warn("[WARN] First plan has non-array areas, converting", firstPlan.areas);
+            firstPlan.areas = [firstPlan.areas];
+          }
+          
           setTreatmentPlan(firstPlan);
 
           if (firstPlan.status === 'completed') {
@@ -106,7 +123,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
           }
           setLoading(false);
         } catch (err) {
-          console.error('Error loading treatment plans:', err);
+          console.error('[ERROR] Error loading treatment plans:', err);
           setError("No treatment plan ID provided and failed to load default plan.");
           setLoading(false);
         }
@@ -114,11 +131,25 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       }
       
       try {
+        console.log(`[DEBUG] Fetching treatment plan with ID: ${planId}`);
         setLoading(true);
         const fetchedPlan = await fetchTreatmentPlanById(planId);
         
         if (!fetchedPlan) {
+          console.error(`[ERROR] Treatment plan with ID ${planId} not found`);
           throw new Error(`Treatment plan with ID ${planId} not found.`);
+        }
+        
+        console.log(`[DEBUG] Fetched plan:`, fetchedPlan);
+        debugObjectProperties(fetchedPlan, "fetchedPlan");
+        
+        // Ensure the plan has the required structure
+        if (!fetchedPlan.areas) {
+          console.warn("[WARN] Fetched plan has no areas, adding empty array");
+          fetchedPlan.areas = [];
+        } else if (!Array.isArray(fetchedPlan.areas)) {
+          console.warn("[WARN] Fetched plan has non-array areas, converting", fetchedPlan.areas);
+          fetchedPlan.areas = [fetchedPlan.areas];
         }
         
         setTreatmentPlan(fetchedPlan);
@@ -136,7 +167,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         
         setLoading(false);
       } catch (err) {
-        console.error('Error loading treatment plan:', err);
+        console.error('[ERROR] Error loading treatment plan:', err);
         setError(err.message || 'Failed to load treatment plan');
         setLoading(false);
       }
@@ -147,29 +178,50 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
 
   useEffect(() => {
     const initializeTreatmentPlan = async () => {
-      if (!treatmentPlan) return;
+      console.log("[DEBUG] initializeTreatmentPlan called");
+      if (!treatmentPlan) {
+        console.log("[DEBUG] No treatment plan available yet");
+        return;
+      }
+      
+      console.log("[DEBUG] Initializing treatment plan:", treatmentPlan);
+      debugObjectProperties(treatmentPlan, "treatmentPlan in initialize");
       
       try {
         const validationError = validateTreatmentPlan(treatmentPlan);
         
         if (validationError) {
+          console.error(`[ERROR] Treatment plan validation failed: ${validationError}`);
           setError(validationError);
           return;
         }
 
+        console.log("[DEBUG] Treatment plan validation successful");
+
         // Find a valid area to center the map on
+        if (!Array.isArray(treatmentPlan.areas)) {
+          console.error("[ERROR] treatmentPlan.areas is not an array:", treatmentPlan.areas);
+          setError("Treatment plan areas is not an array");
+          return;
+        }
+
         const validAreas = treatmentPlan.areas.filter(area => 
           (area.points && area.points.length > 0) || 
           (area.bounds && area.bounds.southWest && area.bounds.northEast)
         );
         
+        console.log(`[DEBUG] Found ${validAreas.length} valid areas`);
+        
         if (validAreas.length > 0) {
           const centerCoords = calculateAreaCenter(validAreas[0]);
+          console.log(`[DEBUG] Setting center position to: [${centerCoords[0]}, ${centerCoords[1]}]`);
           setCenterPosition(centerCoords);
           setZoom(17);
+        } else {
+          console.warn("[WARN] No valid areas to center map on");
         }
       } catch (err) {
-        console.error('Error initializing treatment plan:', err);
+        console.error('[ERROR] Error initializing treatment plan:', err);
         setError('Failed to initialize treatment plan: ' + err.message);
       }
     };
@@ -178,13 +230,16 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
   }, [treatmentPlan]);
 
   const handleStartTreatment = async () => {
+    console.log("[DEBUG] handleStartTreatment called");
     if (!treatmentPlan || !treatmentPlan.id) {
+      console.error("[ERROR] Cannot start treatment: Invalid treatment plan");
       setError("Cannot start treatment: Invalid treatment plan.");
       return;
     }
 
     try {
       // Update the plan status in the database first
+      console.log(`[DEBUG] Updating treatment plan ${treatmentPlan.id} status to in-progress`);
       await updateTreatmentPlanStatus(treatmentPlan.id, 'in-progress');
       
       setTreatmentStatus('inProgress');
@@ -202,11 +257,13 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         });
       }, 1000);
       
+      console.log("[DEBUG] Sending treatment command");
       const result = await sendTreatmentCommand(treatmentPlan);
       
       clearInterval(progressInterval);
       
       if (result.success) {
+        console.log("[DEBUG] Treatment command successful");
         // Update the plan status to completed in the database
         await updateTreatmentPlanStatus(treatmentPlan.id, 'completed');
         
@@ -214,6 +271,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         setTreatmentStatus('completed');
         setStatusMessage(result.message || 'Treatment completed successfully!');
       } else {
+        console.error("[ERROR] Treatment command failed:", result.message);
         // Update the plan status to indicate an error
         await updateTreatmentPlanStatus(treatmentPlan.id, 'error');
         
@@ -221,7 +279,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         setStatusMessage(result.message || 'Treatment failed with an unknown error.');
       }
     } catch (err) {
-      console.error('Error during treatment execution:', err);
+      console.error('[ERROR] Error during treatment execution:', err);
       setTreatmentStatus('error');
       setStatusMessage(`An unexpected error occurred: ${err.message}`);
       setTreatmentProgress(0);
@@ -229,18 +287,25 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
   };
 
   const handleRetry = () => {
+    console.log("[DEBUG] handleRetry called");
     setTreatmentStatus('pending');
     setStatusMessage('');
     setTreatmentProgress(0);
   };
 
   if (loading) {
+    console.log("[DEBUG] Rendering loading state");
     return <LoadingState />;
   }
 
   if (error) {
+    console.log(`[DEBUG] Rendering error state: ${error}`);
     return <ErrorState error={error} />;
   }
+
+  console.log("[DEBUG] Rendering WeedMitigation component");
+  console.log("[DEBUG] Current treatment plan:", treatmentPlan);
+  debugObjectProperties(treatmentPlan, "treatmentPlan in render");
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -256,7 +321,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
           isStartDisabled={!treatmentPlan || !treatmentPlan.areas || treatmentPlan.areas.length === 0}
         />
 
-        {treatmentPlan && Array.isArray (treatmentPlan.areas) && treatmentPlan.areas.length > 0 && (
+        {treatmentPlan && Array.isArray(treatmentPlan.areas) && treatmentPlan.areas.length > 0 && (
           <TreatmentMap 
             areas={treatmentPlan.areas}
             centerPosition={centerPosition}

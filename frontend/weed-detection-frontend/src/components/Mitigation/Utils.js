@@ -5,32 +5,42 @@
  */
 
 export const calculateAreaCenter = (area) => {
+  console.log(`[DEBUG] Calculating area center for:`, area);
   // if area has explicit center use it
-    if (area.center && typeof area.center.latitude === 'number' && typeof area.center.longitude === 'number') {
-      return [area.center.latitude, area.center.longitude];
-    }
+  if (area.center && typeof area.center.latitude === 'number' && typeof area.center.longitude === 'number') {
+    console.log(`[DEBUG] Using explicit center: [${area.center.latitude}, ${area.center.longitude}]`);
+    return [area.center.latitude, area.center.longitude];
+  }
 
     // if area has bounds use center of th ebounds
-    if (area.points && area.bounds.southWest && area.bounds.northEast) {
-       const { southWest, northEast } = area.bounds;
-       return [
-        (southWest.latitude + northEast.latitude) / 2,
-        (southWest.longitude + northEast.longitude) /2
-       ];
-    }
+  if (area.points && area.bounds.southWest && area.bounds.northEast) {
+      const { southWest, northEast } = area.bounds;
+      return [
+      (southWest.latitude + northEast.latitude) / 2,
+      (southWest.longitude + northEast.longitude) /2
+      ];
+      console.log(`[DEBUG] Calculated center from bounds: [${center[0]}, ${center[1]}]`);
+      return center;
+  }
     // if area has points, calculate the centroid
-    if (area.points && Array.isArray(area.points) && area.points.length > 0) {
-      const validPoints = area.points.filter(point =>
-        point && typeof point.latitude === 'number' && typeof point.longitude === 'number'
-      );
-      if (validPoints.length > 0) {
-        const sumLat = validPoints.reduce((sum, point) => sum + point.latitude, 0);
-        const sumLng = validPoints.reduce((sum, point) => sum + point.longitude, 0);
-        return [sumLat / validPoints.length, sumLng / validPoints.length];
-      }
+  if (area.points && Array.isArray(area.points) && area.points.length > 0) {
+    console.log(`[DEBUG] Calculating centroid from ${area.points.length} points`);
+    const validPoints = area.points.filter(point =>
+      point && typeof point.latitude === 'number' && typeof point.longitude === 'number'
+    );
+    console.log(`[DEBUG] Found ${validPoints.length} valid points`);
+
+    if (validPoints.length > 0) {
+      const sumLat = validPoints.reduce((sum, point) => sum + point.latitude, 0);
+      const sumLng = validPoints.reduce((sum, point) => sum + point.longitude, 0);
+      const center = [sumLat / validPoints.length, sumLng / validPoints.length];
+      console.log(`[DEBUG] Calculated centroid: [${center[0]}, ${center[1]}]`);
+      return center;
     }
+  }
+  console.warn(`[WARN] Could not calculate center, using default [0, 0]`);
     
-    return [0, 0]; // Default fallback
+  return [0, 0]; // Default fallback
   };
   
 
@@ -147,5 +157,31 @@ export const fetchAllTreatmentPlans = async () => {
   } catch (error) {
     console.error('Error fetching all treatment plans:', error);
     throw error;
+  }
+};
+
+export const debugObjectProperties = (obj, label = 'Object') => {
+  console.log(`[DEBUG] ${label} structure check:`);
+  if (!obj) {
+    console.log(`  - ${label} is null or undefined`);
+    return;
+  }
+  
+  console.log(`  - Type: ${typeof obj}`);
+  
+  if (typeof obj === 'object') {
+    console.log(`  - Properties: ${Object.keys(obj).join(', ')}`);
+    
+    if (obj.areas) {
+      console.log(`  - areas type: ${typeof obj.areas}`);
+      console.log(`  - areas is Array: ${Array.isArray(obj.areas)}`);
+      console.log(`  - areas length: ${Array.isArray(obj.areas) ? obj.areas.length : 'N/A'}`);
+      
+      if (Array.isArray(obj.areas) && obj.areas.length > 0) {
+        const area = obj.areas[0];
+        console.log(`  - First area type: ${typeof area}`);
+        console.log(`  - First area properties: ${Object.keys(area).join(', ')}`);
+      }
+    }
   }
 };
