@@ -32,14 +32,43 @@ export const calculateAreaCenter = (area) => {
     }
     
     if (area.bounds && area.bounds.southWest && area.bounds.northEast) {
-      return [
-        [area.bounds.southWest[0], area.bounds.southWest[1]],
-        [area.bounds.southWest[0], area.bounds.northEast[1]],
-        [area.bounds.northEast[0], area.bounds.northEast[1]],
-        [area.bounds.northEast[0], area.bounds.southWest[1]]
-      ];
+      const { southWest, northEast } = area.bounds;
+
+      if (
+        typeof southWest.latitude === 'number' &&
+        typeof southWest.longitude === 'number' &&
+        typeof northEast.latitude === 'number' &&
+        typeof northEast.longitude === 'number'
+      ) {
+        // create a rectangle using corners
+        return [
+          [southWest.latitude, southWest.longitude],
+          [southWest.latitude, northEast.longitude],
+          [northEast.latitude, northEast.longitude],
+          [northEast.latitude, southWest.longitude]
+        ];
+      }
     }
-    
+
+    // If the area has a center point and radius, create a circle approximation
+    if (area.center && typeof area.radius === 'number') {
+      const { latitude, longitude } = area.center;
+      const radius = area.radius;
+
+      if (typeof latitude === 'number' && typeof longitude === 'number') {
+        // Create a circle approximation (8 points)
+        const points = [];
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          // Convert radius from meters to approximate lat/long (very rough approximation)
+          const lat = latitude + (Math.sin(angle) * radius / 111000);
+          const lng = longitude + (Math.cos(angle) * radius / (111000 * Math.cos(latitude * Math.PI / 180)));
+          points.push([lat, lng]);
+        }
+        return points;
+      }
+    }
+    console.warn("Invalid area geomeetry:", area);
     return []; // Empty array if invalid
   };
 
