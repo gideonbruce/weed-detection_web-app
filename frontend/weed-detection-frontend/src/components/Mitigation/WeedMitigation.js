@@ -50,7 +50,12 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
     try {
       const response = await fetch(`/api/treatment-plans/${planId}`);
       if (!response.ok) throw new Error("Failed to fetch treatment plan");
-      return await response.json();
+
+      const data = await response.json();
+      if (!data.areas || !Array.isArray(data.areas)) {
+        data.areas = [];
+      }
+      return data;
     } catch (err) {
       console.error("Error fetching treatment plan:", err);
       throw err;
@@ -243,7 +248,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
           isStartDisabled={!treatmentPlan || !treatmentPlan.areas || treatmentPlan.areas.length === 0}
         />
 
-        {treatmentPlan && treatmentPlan.areas && treatmentPlan.areas.length > 0 && (
+        {treatmentPlan && Array.isArray (treatmentPlan.areas) && treatmentPlan.areas.length > 0 && (
           <TreatmentMap 
             areas={treatmentPlan.areas}
             centerPosition={centerPosition}
@@ -252,7 +257,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
           />
         )}
         
-        {treatmentPlan && treatmentPlan.areas && (
+        {treatmentPlan && Array.isArray(treatmentPlan.areas) && (
           <TreatmentTable 
             areas={treatmentPlan.areas}
             calculatePolygonPoints={calculatePolygonPoints}
