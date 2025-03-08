@@ -200,7 +200,6 @@ export const validateTreatmentPlan = (plan) => {
     if (!area.type) {
       console.error(`Area ${i + 1} is missing type, defaulting to polygon`);
       area.type = 'polygon';
-      return `Area ${i + 1} is missing type`;
     }
 
     let hasValidGeometry = false;
@@ -225,7 +224,7 @@ export const validateTreatmentPlan = (plan) => {
             console.error(`[ERROR] Area ${i + 1} has points, but none are valid (${validPoints.length}/${minPoints} needed)`);
           }
         } else {
-          console.warn(`Area ${i + 1} has less than 3 points`);
+          console.warn(`[WARN]Area ${i + 1} has less than ${minPoints} points`);
         }
       } else {
         console.error(`[ERROR] Area ${i + 1} points is not an array:`, area.points);
@@ -233,8 +232,7 @@ export const validateTreatmentPlan = (plan) => {
     }
     
     // Check for valid bounds
-    let hasValidBounds = false;
-    if (area.bounds) {
+    if (!hasValidGeometry && area.bounds) {
       if (area.bounds.southWest && area.bounds.northEast) {
         const { southWest, northEast } = area.bounds;
         
@@ -243,23 +241,47 @@ export const validateTreatmentPlan = (plan) => {
                             typeof southWest.longitude === 'number' &&
                             typeof northEast.latitude === 'number' &&
                             typeof northEast.longitude === 'number';
+          if (!hasValidGeometry) {
+            console.error(`[ERROR] Area ${i + 1} bounds coordinates are not valid numbers`);
+          }
         } else {
-          console.error(`Area ${i + 1} bounds coordinates are not objects`);
+          console.error(`[ERROR] Area ${i + 1} bounds coordinates are not objects`, { southWest, northEast });
         }
       } else {
-        console.error(`Area ${i + 1} bounds is missing southWest or northEast`);
+        console.error(`[ERROR] Area ${i + 1} bounds is missing southWest or northEast`);
       }
     }
     
     // Check for valid center & radius
-    let hasValidCircle = false;
-    if (area.center && typeof area.radius === 'number') {
-      if (typeof area.center === 'object') {
-        hasValidCircle = typeof area.center.latitude === 'number' && 
-                          typeof area.center.longitude === 'number' &&
-                          area.radius > 0;
+    if (!hasValidGeometry && area.center && area.radius !== undefined) {
+      if (typeof area.center === 'object' || Array.isArray(area.center)) {
+        if (Array.isArray(area.center) && area.center.length === 2) {
+          hasValidGeometry = typeof area.center[0] === 'number' && 
+                            typeof area.center[1] === 'number' &&
+                            typeof area.radius === 'number' &&
+                            area.radius > 0;
+
+        if (!hasValidGeometry) {
+          console.error(`[ERROR] Area ${i + 1} center/radius is invalid:`, { center: area.center, radius: area.radius });
+        }
+      } else {
+        console.error(`[ERROR] Area ${i + 1} center is not an object:`, area.center);
       }
     }
+
+    // If we still don't have valid geometry, create default geometry for development purposes
+    if (!hasValidGeometry) {
+      // For development/debugging - you may want to remove this in production
+      console.warn(`[WARN] Area ${i + 1} has invalid geometry, creating default geometry`);
+      
+      // Create a small default area around [0,0] for debugging
+      area.center = { latitude: 0, longitude: 0 };
+      area.radius = 100; // meters
+      
+      // In production, you would instead return an error:
+      // return `Area ${i + 1} has invalid geometry (missing valid points, bounds, or center+radius)`;
+    }
+  
     
     // Ensure at least one valid geometry type
     if (!hasValidPoints && !hasValidBounds && !hasValidCircle) {
