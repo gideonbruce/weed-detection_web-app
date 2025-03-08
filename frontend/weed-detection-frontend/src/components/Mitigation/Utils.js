@@ -265,6 +265,10 @@ export const validateTreatmentPlan = (plan) => {
   return null; // No validation errors
 };
 
+export const ensureValidTreatmentPlan = (plan) => {
+  
+}
+
 // Retrieve all treatment plans
 export const fetchAllTreatmentPlans = async () => {
   try {

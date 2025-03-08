@@ -13,7 +13,8 @@ import {
   updateTreatmentPlanStatus,
   fetchAllTreatmentPlans,
   sendTreatmentCommand,
-  debugObjectProperties
+  debugObjectProperties,
+  ensureValidTreatmentPlan
 } from './Utils';
 
 const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
@@ -70,7 +71,8 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         debugObjectProperties(treatmentPlanProp, "treatmentPlanProp");
         
         // Ensure the plan has the required structure
-        const processedPlan = { ...treatmentPlanProp };
+        const processedPlan = ensureValidTreatmentPlan(treatmentPlanProp);
+
         if (!processedPlan.areas) {
           console.warn("[WARN] Treatment plan from props has no areas, adding empty array");
           processedPlan.areas = [];
@@ -142,6 +144,8 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         
         console.log(`[DEBUG] Fetched plan:`, fetchedPlan);
         debugObjectProperties(fetchedPlan, "fetchedPlan");
+
+        const processedPlan = ensureValidTreatmentPlan(fetchedPlan);
         
         // Ensure the plan has the required structure
         if (!fetchedPlan.areas) {
