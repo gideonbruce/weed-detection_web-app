@@ -327,7 +327,8 @@ def mitigate_weed():
 
     except Exception as e:
         print("Error:", str(e))
-        return jsonify({"Error": "Internal Server Error", "details": str(e)}), 500
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
 
 @app.route('/get_mitigation_history', methods=['GET'])
 def get_mitigation_history():
@@ -335,7 +336,8 @@ def get_mitigation_history():
         connection = get_db_connection()
         cursor = connection.cursor()
 
-        cursor.execute(""""
+        # Fixed the SQL syntax error (removed extra quotation mark)
+        cursor.execute("""
         SELECT wd.id, wd.latitude, wd.longitude, wd.timestamp, wd.mitigation_status, 
                wm.method, wm.applied_by, wm.timestamp as mitigation_time, wm.notes
         FROM weed_detections wd
@@ -354,22 +356,35 @@ def get_mitigation_history():
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
+        
 @app.route('/treatment-plans/<int:plan_id>/status', methods=['PUT'])
 def update_treatment_status(plan_id):
     try:
         data = request.get_json()
         new_status = data.get('status')
 
-        if not new_status:
-            return jsonify({"error": "Missing status field"}), 400
-
+        valid_statuses = ['pending', 'in-progress', 'completed', 'error']
+        if not new_status or new_status not in valid_statuses:
+            return jsonify({
+                "error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+            }), 400
         connection = get_db_connection()
         cursor = connection.cursor()
 
+        #First check if plan exists and its current status
+        cursor.execute("SELECT status FROM treatment_plans WHERE id = %s", (plan_id,))
+        result = cursor.fetchone()
+
+        if not result:
+            cursor.close()
+            connection.close()
+            return jsonify({"error": f"Treatment plan with ID {plan_id} not foumd"}), 404
+        
+        #update status
         sql = "UPDATE treatment_plans SET status = %s WHERE id = %s"
         cursor.execute(sql, (new_status, plan_id))
         connection.commit()
-        
+
         cursor.close()
         connection.close()
 

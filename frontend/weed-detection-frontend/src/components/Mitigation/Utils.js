@@ -98,22 +98,57 @@ export const fetchTreatmentPlanById = async (planId, bustCache = false) => {
 export const sendTreatmentCommand = async (treatmentPlan) => {
   try {
     console.log(`[DEBUG] Sending treatment command:`, treatmentPlan);
-    // Replace with actual API call
-    const response = await fetch('http://127.0.0.1:5000/mitigate_weed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(treatmentPlan),
-    });
     
-    if (!response.ok) {
-      console.error(`[ERROR] Treatment command failed with status: ${response.status} ${response.statusText}`);
+    //extracting and converting the detection areas from the treatment plan
+    if (!treatmentPlan || !treatmentPlan.areas || !treatmentPlan.method) {
+      throw new Error("Invalid treatment plan: missing areas or method");
     }
+
+    // for each area in the treatment plan, create a mitigation record
+    const mitigationPromises = treatmentPlan.areas.map(async (area, index) => {
+      const mitigationData = {
+        detection_id: area.id || `${treatmentPlan.id}-area-${index}`,
+        method: treatmentPlan.method, // Use the method from the treatment plan
+        applied_by: "automated-system", 
+        notes: `Automated treatment from plan ${treatmentPlan.id || 'unknown'}`
+      };
+      console.log(`[DEBUG] Sending mitigation request for area ${index}:`, mitigationData);
+
+      const response = await fetch('http://127.0.0.1:5000/mitigate_weed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mitigationData),
+      });
     
-    const data = await response.json();
-    console.log(`[DEBUG] Treatment command response:`, data);
-    return data;
+      if (!response.ok) {
+        console.error(`[ERROR] Mitigation for area ${index} failed with status: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Failed to mitigate area ${index}: ${errorText}`);
+      }
+      const data = await response.json();
+      console.log(`[DEBUG] Mitigation response for area ${index}:`, data);
+      return data;
+    });
+
+    try {
+      // Wait for all mitigation requests to complete
+      const results = await Promise.all(mitigationPromises);
+      console.log(`[DEBUG] All mitigation requests completed successfully:`, results);
+
+      return { 
+        success: true, 
+        message: `Successfully treated ${results.length} areas`, 
+        details: results 
+      };
+    } catch (error) {
+      console.error(`[ERROR] Some mitigation requests failed:`, error);
+      return { 
+        success: false, 
+        message: `Treatment partially failed: ${error.message}` 
+      };
+    }
   } catch (error) {
-    console.error(`[ERROR] Error sending treatment command:`, error);
+    console.error(`[ERROR] Error in treatment execution:`, error);
     return { success: false, message: `Failed to send treatment command: ${error.message}` };
   }
 };

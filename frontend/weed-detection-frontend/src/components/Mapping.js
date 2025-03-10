@@ -22,7 +22,7 @@ L.Icon.Default.mergeOptions({
 // Custom weed icon
 const weedIcon = L.icon({
   iconUrl: weedIconImg,
-  iconSize: [32, 32],
+  iconSize: [16, 16],
   iconAnchor: [16, 32],
   popupAnchor: [0, -32],
 });
