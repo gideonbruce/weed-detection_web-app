@@ -10,7 +10,7 @@ import {
   calculateAreaCenter, 
   calculatePolygonPoints,
   fetchTreatmentPlanById,
-  updateTreatmentPlanStatus,
+  //updateTreatmentPlanStatus,
   fetchAllTreatmentPlans,
   sendTreatmentCommand,
   debugObjectProperties,
@@ -37,12 +37,12 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
     console.log("[DEBUG] WeedMitigation component initialized");
     console.log("[DEBUG] planId:", planId);
     console.log("[DEBUG] treatmentPlanProp:", treatmentPlanProp);
-  }, []);
+  }, [planId, treatmentPlanProp]);
 
   const updateTreatmentPlanStatus = async (planId, status) => {
     try {
       console.log(`[DEBUG] Updating treatment plan ${planId} status to ${status}`);
-      const response = await fetch(`/treatment-plans/${planId}/status`, {
+      const response = await fetch(`http://localhost:5000/treatment-plans/${planId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),

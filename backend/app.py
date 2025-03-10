@@ -363,13 +363,13 @@ def update_treatment_status(plan_id):
         if not new_status:
             return jsonify({"error": "Missing status field"}), 400
 
-        connectio = get_db_connection()
+        connection = get_db_connection()
         cursor = connection.cursor()
 
         sql = "UPDATE treatment_plans SET status = %s WHERE id = %s"
         cursor.execute(sql, (new_status, plan_id))
-
         connection.commit()
+        
         cursor.close()
         connection.close()
 
