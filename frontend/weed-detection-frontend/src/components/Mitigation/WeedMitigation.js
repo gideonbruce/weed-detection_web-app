@@ -135,7 +135,8 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       try {
         console.log(`[DEBUG] Fetching treatment plan with ID: ${planId}`);
         setLoading(true);
-        const fetchedPlan = await fetchTreatmentPlanById(planId);
+
+        const fetchedPlan = await fetchTreatmentPlanById(planId, true); //cache busting parameter
         
         if (!fetchedPlan) {
           console.error(`[ERROR] Treatment plan with ID ${planId} not found`);
@@ -244,6 +245,8 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
 
     try {
       // Update the plan status in the database first
+      console.log(`[DEBUG] Updating treatment plan ID ${treatmentPlan.id}, type:${typeof treatmentPlan.id}`);
+
       console.log(`[DEBUG] Updating treatment plan ${treatmentPlan.id} status to in-progress`);
       await updateTreatmentPlanStatus(treatmentPlan.id, 'in-progress');
       
