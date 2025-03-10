@@ -10,7 +10,7 @@ import {
   calculateAreaCenter, 
   calculatePolygonPoints,
   fetchTreatmentPlanById,
-  //updateTreatmentPlanStatus,
+  updateTreatmentPlanStatus,
   fetchAllTreatmentPlans,
   sendTreatmentCommand,
   debugObjectProperties,
@@ -39,7 +39,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
     console.log("[DEBUG] treatmentPlanProp:", treatmentPlanProp);
   }, [planId, treatmentPlanProp]);
 
-  const updateTreatmentPlanStatus = async (planId, status) => {
+  /*const updateTreatmentPlanStatus = async (planId, status) => {
     try {
       console.log(`[DEBUG] Updating treatment plan ${planId} status to ${status}`);
       const response = await fetch(`http://localhost:5000/treatment-plans/${planId}/status`, {
@@ -58,7 +58,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       console.error("[ERROR] Error updating treatment status:", err);
       throw err;
     }
-  };
+  };*/
   
   // Fetch the treatment plan from the database if it was not passed as a prop
   useEffect(() => {

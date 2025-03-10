@@ -110,7 +110,7 @@ const TreatmentPlanning = () => {
       );
 
       if (goToMitigation) {
-        navigate(`/weed-mitigation/${savedPlan.id}`);
+        navigate(`/mitigation`);
       }
     } catch (error) {
       console.error("Error saving treatment plan:", error);

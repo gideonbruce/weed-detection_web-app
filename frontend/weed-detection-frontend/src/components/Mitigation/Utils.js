@@ -468,6 +468,40 @@ export const fetchAllTreatmentPlans = async () => {
   }
 };
 
+export const updateTreatmentPlanStatus = async (planId, status) => {
+  try {
+    console.log(`[DEBUG] Updating treatment plan ${planId} status to ${status}`);
+    
+    // Make sure planId is a number for the backend route
+    const numericPlanId = parseInt(planId, 10);
+    
+    // Check if planId is actually a number
+    if (isNaN(numericPlanId)) {
+      console.error(`[ERROR] Invalid plan ID: ${planId} is not a number`);
+      throw new Error("Invalid plan ID format");
+    }
+    
+    const response = await fetch(`http://127.0.0.1:5000/treatment-plans/${numericPlanId}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      console.error(`[ERROR] Failed to update treatment status: ${response.status} ${response.statusText}`);
+      const errorData = await response.json();
+      console.error(`[ERROR] Error details:`, errorData);
+      throw new Error(`Failed to update treatment status: ${errorData.error || response.statusText}`);
+    }
+    
+    console.log(`[DEBUG] Treatment status updated successfully`);
+    return await response.json();
+  } catch (err) {
+    console.error("[ERROR] Error updating treatment status:", err);
+    throw err;
+  }
+};
+
 export const debugObjectProperties = (obj, label = 'Object') => {
   console.log(`[DEBUG] ${label} structure check:`);
   if (!obj) {
