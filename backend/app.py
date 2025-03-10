@@ -354,7 +354,8 @@ def get_mitigation_history():
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
-@app.route('/treatment-plans/<int:plan>status')
+@app.route('/treatment-plans/<int:plan_id>/status', methods=['PUT'])
+def update_treatment_status(plan_id):
 
 @app.route('/detect', methods=['POST'])
 def detect():
