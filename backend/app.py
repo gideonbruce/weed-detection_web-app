@@ -358,6 +358,21 @@ def get_mitigation_history():
 def update_treatment_status(plan_id):
     try:
         data = request.get_json()
+        new_status = data.get('status')
+
+        if not new_status:
+            return jsonify({"error": "Missing status field"}), 400
+
+        connectio = get_db_connection()
+        cursor = connection.cursor()
+
+        sql = "UPDATE treatment_plans SET status = %s WHERE id = %s"
+        cursor.execute(sql, (new_status, plan_id))
+
+        connection.commit()
+        cursor.close()
+        connection.close()
+
         return jsonify({"message": "Treatment status updated successfully"}), 200
     except Exception as e:
         print("Error:", str(e))
