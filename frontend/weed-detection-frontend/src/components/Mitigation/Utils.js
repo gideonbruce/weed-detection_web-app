@@ -44,10 +44,12 @@ export const calculateAreaCenter = (area) => {
   return [0, 0]; // Default fallback
 };
 
-export const fetchTreatmentPlanById = async (planId) => {
+export const fetchTreatmentPlanById = async (planId, bustCache = false) => {
   try {
+    const cacheParam = bustCache ? `?t=${Date.now()}` : '';
+
     console.log(`[DEBUG] Fetching treatment plan with ID: ${planId}`);
-    const response = await fetch(`/treatment-plans/${planId}`);
+    const response = await fetch(`/treatment-plans/${planId}${cacheParam}`);
     
     if (!response.ok) {
       console.error(`[ERROR] Failed to fetch treatment plan: ${response.status} ${response.statusText}`);
