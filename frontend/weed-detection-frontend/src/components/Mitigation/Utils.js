@@ -474,6 +474,13 @@ export const updateTreatmentPlanStatus = async (planId, status) => {
   try {
     console.log(`[DEBUG] Updating treatment plan ${planId} status to ${status}`);
     
+    // checking status according to database schema
+    const validStatuses = ['pending', 'in-progress', 'completed', 'error'];
+    if (!validStatuses.includes(status)) {
+      console.error(`[ERROR] Invalid status: ${status}`);
+      throw new Error(`Invalid status: must be one of ${validStatuses.join(', ')}`);
+    }
+
     // Make sure planId is a number for the backend route
     const numericPlanId = parseInt(planId, 10);
     
