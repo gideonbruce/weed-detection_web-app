@@ -63,6 +63,21 @@ export const fetchTreatmentPlanById = async (planId) => {
     } else if (!data.areas) {
       console.warn(`[WARN] Treatment plan has no areas property, adding empty array`);
       data.areas = [];
+    } else if (typeof data.areas === 'string') {
+      // parse string JSON aras into objects
+      try {
+        console.log(`[DEBUG] Treatment plan areas is a string, attempting to parse as JSON`);
+        data.areas = JSON.parse(data.areas);
+
+        if (!Array.isArray(data.areas)) {
+          console.warn(`[WARN] Treatment plan parsed areas is not an array, coverting`, data.areas);
+          data.areas = [data.areas];
+        }
+      } catch (e) {
+        console.error(`[ERROR] Failed to parse areas string as JSON:`, e);
+        console.warn(`[WARN] Setting areas to empty array due to parse failre`);
+        data.areas = [];
+      }
     } else if (!Array.isArray(data.areas)) {
       console.warn(`[WARN] Treatment plan areas is not an array, converting`, data.areas);
       data.areas = [data.areas];
@@ -102,54 +117,76 @@ export const sendTreatmentCommand = async (treatmentPlan) => {
 };
   
 
-  export const calculatePolygonPoints = (area) => {
-    // if area already has points use them
-    if (area.points && Array.isArray(area.points) && area.points.length > 0) {
-      return area.points.filter(point =>
-        point && typeof point.latitude === 'number' && typeof point.longitude === 'number'
-      ).map(point => [point.latitude, point.longitude]);
+export const calculatePolygonPoints = (area) => {
+  // Log the area for debugging
+  console.log(`[DEBUG] Calculating polygon points for area:`, area);
+  
+  // if area already has points use them
+  if (area.points && Array.isArray(area.points) && area.points.length > 0) {
+    return area.points.filter(point =>
+      point && typeof point.latitude === 'number' && typeof point.longitude === 'number'
+    ).map(point => [point.latitude, point.longitude]);
+  }
+  
+  if (area.bounds && area.bounds.southWest && area.bounds.northEast) {
+    const { southWest, northEast } = area.bounds;
+
+    if (
+      typeof southWest.latitude === 'number' &&
+      typeof southWest.longitude === 'number' &&
+      typeof northEast.latitude === 'number' &&
+      typeof northEast.longitude === 'number'
+    ) {
+      // create a rectangle using corners
+      return [
+        [southWest.latitude, southWest.longitude],
+        [southWest.latitude, northEast.longitude],
+        [northEast.latitude, northEast.longitude],
+        [northEast.latitude, southWest.longitude]
+      ];
     }
+  }
+
+  // If the area has a center point and radius, create a circle approximation
+  if (area.center && typeof area.radius === 'number') {
+    let latitude, longitude;
     
-    if (area.bounds && area.bounds.southWest && area.bounds.northEast) {
-      const { southWest, northEast } = area.bounds;
-
-      if (
-        typeof southWest.latitude === 'number' &&
-        typeof southWest.longitude === 'number' &&
-        typeof northEast.latitude === 'number' &&
-        typeof northEast.longitude === 'number'
-      ) {
-        // create a rectangle using corners
-        return [
-          [southWest.latitude, southWest.longitude],
-          [southWest.latitude, northEast.longitude],
-          [northEast.latitude, northEast.longitude],
-          [northEast.latitude, southWest.longitude]
-        ];
-      }
+    // Handle center being an array [lat, lng]
+    if (Array.isArray(area.center) && area.center.length >= 2) {
+      latitude = area.center[0];
+      longitude = area.center[1];
+      console.log(`[DEBUG] Using array center: [${latitude}, ${longitude}]`);
+    }
+    // Handle center being an object {latitude, longitude}
+    else if (typeof area.center === 'object' && 
+             typeof area.center.latitude === 'number' && 
+             typeof area.center.longitude === 'number') {
+      latitude = area.center.latitude;
+      longitude = area.center.longitude;
+      console.log(`[DEBUG] Using object center: [${latitude}, ${longitude}]`);
+    }
+    else {
+      console.warn("[WARN] Invalid center format:", area.center);
+      return []; // Empty array if invalid center
     }
 
-    // If the area has a center point and radius, create a circle approximation
-    if (area.center && typeof area.radius === 'number') {
-      const { latitude, longitude } = area.center;
-      const radius = area.radius;
-
-      if (typeof latitude === 'number' && typeof longitude === 'number') {
-        // Create a circle approximation (8 points)
-        const points = [];
-        for (let i = 0; i < 8; i++) {
-          const angle = (i / 8) * Math.PI * 2;
-          // Convert radius from meters to approximate lat/long (very rough approximation)
-          const lat = latitude + (Math.sin(angle) * radius / 111000);
-          const lng = longitude + (Math.cos(angle) * radius / (111000 * Math.cos(latitude * Math.PI / 180)));
-          points.push([lat, lng]);
-        }
-        return points;
+    if (typeof latitude === 'number' && typeof longitude === 'number') {
+      // Create a circle approximation (8 points)
+      const points = [];
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        // Convert radius from meters to approximate lat/long (very rough approximation)
+        const lat = latitude + (Math.sin(angle) * area.radius / 111000);
+        const lng = longitude + (Math.cos(angle) * area.radius / (111000 * Math.cos(latitude * Math.PI / 180)));
+        points.push([lat, lng]);
       }
+      return points;
     }
-    console.warn("Invalid area geomeetry:", area);
-    return []; // Empty array if invalid
-  };
+  }
+  
+  console.warn("[WARN] Invalid area geometry:", area);
+  return []; // Empty array if invalid
+};
 
 export const validateTreatmentPlan = (plan) => {
   // Basic null/undefined check
@@ -319,13 +356,28 @@ export const ensureValidTreatmentPlan = (plan) => {
   if (!processedPlan.areas) {
     console.warn('[WARN] Treatment plan has no areas, adding empty array');
     processedPlan.areas = [];
+  } else if (typeof processedPlan.areas === 'string') {
+    //parse string as JSON into objects
+    try {
+      console.log('[DEBUG] Treatment plan is a string, attempting to parse as JSON');
+      processedPlan.areas = JSON.parse(processedPlan.areas);
+
+      if (!Array.isArray(processedPlan.areas)) {
+        console.warn('[WARN] Treatment plan parsed areas is not an array, converting', processedPlan.areas);
+        processedPlan.areas = [processedPlan.areas];
+      }
+    } catch (e) {
+      console.error('[ERROR] Failed to parse areas string as JSON:', e);
+      console.warn('[WARN] Setting areas to empty array due to parse failure');
+      processedPlan.areas = [];
+    }
   } else if (!Array.isArray(processedPlan.areas)) {
-    console.warn('[WARN] Treatment plan areas is not an array, converting', processedPlan.areas);
+    console.warn('[WARN] Treatment plan is not an array, converting', processedPlan.areas);
     processedPlan.areas = [processedPlan.areas];
   }
 
   // fixing nested arrays to objetcs
-  if (processedPlan.areas.length > 0 && Array.isArray(processedPlan.areas[0])) {
+  if (processedPlan.areas.length > 0 && Array.isArray(processedPlan.areas[0]) && !processedPlan.areas[0].type) {
     console.warn('[WARN] Treatment plan areas contains a nested array, flattening', processedPlan.areas);
     processedPlan.areas = processedPlan.areas[0];
   }
@@ -348,11 +400,12 @@ export const ensureValidTreatmentPlan = (plan) => {
 
     // convert center from array to object
     if (area.center && Array.isArray(area.center) && area.center.length >= 2) {
-      area.center = {
+      console.log(`[DEBUG] Area ${index + 1} has array center: [${area.center[0]}, ${area.center[1]}]`);
+      /*area.center = {
         latitude: area.center[0],
         longitude: area.center[1]
       };
-      console.log(`[DEBUG] Converted center array to object for area ${index + 1}:`, area.center);
+      console.log(`[DEBUG] Converted center array to object for area ${index + 1}:`, area.center);*/
     }
     return area;
   });
@@ -384,8 +437,25 @@ export const fetchAllTreatmentPlans = async () => {
         console.warn(`[WARN] Plan ${index} has no areas property, adding empty array`);
         plan.areas = [];
       } else if (!Array.isArray(plan.areas)) {
-        console.warn(`[WARN] Plan ${index} areas is not an array, converting`, plan.areas);
-        plan.areas = [plan.areas];
+        //checking if areas is a string containing JSON
+        if (typeof plan.areas === 'string') {
+          try {
+            console.log(`[DEBUG] Plan ${index} areas is a string, attempting to parse as JSON`);
+            plan.areas = JSON.parse(plan.areas);
+
+            if (!Array.isArray(plan.areas)) {
+              console.warn(`[WARN] Plan ${index} parsed ares is not an array, converting`, plan.areas);
+              plan.areas = [plan.areas];
+            }
+          } catch (e) {
+            console.error(`[ERROR] Failed to parse areas string as JSON for plan ${index}:`, e);
+            console.warn(`[WARN] Setting areas to empty array due to parse failure`);
+            plan.areas = [plan.areas];
+          }
+        } else {
+          console.warn(`[WARN] Plan ${index} areas is not an array, converting`, plan.areas);
+          plan.areas = [plan.areas];
+        }
       }
     });
     
