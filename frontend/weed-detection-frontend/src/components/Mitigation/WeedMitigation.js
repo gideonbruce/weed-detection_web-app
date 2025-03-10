@@ -27,7 +27,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
   const [treatmentProgress, setTreatmentProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [centerPosition, setCenterPosition] = useState([0, 0]);
+  const [centerPosition, setCenterPosition] = useState([-0.68885, 34.78321]);
   const [zoom, setZoom] = useState(16);
   const [treatmentStatus, setTreatmentStatus] = useState('pending'); // pending, inProgress, completed, error
   const [statusMessage, setStatusMessage] = useState('');
@@ -42,7 +42,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
   const updateTreatmentPlanStatus = async (planId, status) => {
     try {
       console.log(`[DEBUG] Updating treatment plan ${planId} status to ${status}`);
-      const response = await fetch(`/api/treatment-plans/${planId}/status`, {
+      const response = await fetch(`/treatment-plans/${planId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
@@ -220,9 +220,10 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
           const centerCoords = calculateAreaCenter(validAreas[0]);
           console.log(`[DEBUG] Setting center position to: [${centerCoords[0]}, ${centerCoords[1]}]`);
           setCenterPosition(centerCoords);
-          setZoom(17);
+          //setZoom(17);
         } else {
           console.warn("[WARN] No valid areas to center map on");
+          setCenterPosition([-0.68885, 34.78321]);
         }
       } catch (err) {
         console.error('[ERROR] Error initializing treatment plan:', err);

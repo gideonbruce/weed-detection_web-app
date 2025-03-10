@@ -1,6 +1,7 @@
 // Helper function: Calculate distance between two points using Haversine formula
 
 import {v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Earth radius in meters
@@ -412,4 +413,19 @@ export const updateTreatmentPlanStatus = async (planId, newStatus) => {
     console.error(`Error updating treatment plan status:`, error);
     throw error;
   }
+};
+
+export const aggregateDetectionsByDensity = (detections) => {
+  // Group detections into clusters based on proximity and density
+  // Return data structured for visualization and planning
+  const aggregated = {
+    highDensity: [],
+    mediumDensity: [],
+    lowDensity: []
+  };
+  
+  // Implement clustering algorithm (e.g., DBSCAN)
+  // ...
+  
+  return aggregated;
 };
