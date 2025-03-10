@@ -354,6 +354,8 @@ def get_mitigation_history():
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
+@app.route('/treatment-plans/<int:plan>status')
+
 @app.route('/detect', methods=['POST'])
 def detect():
     print("Recieved request:", request.files)
