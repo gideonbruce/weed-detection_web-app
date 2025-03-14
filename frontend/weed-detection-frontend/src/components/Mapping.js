@@ -246,6 +246,11 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
           return;
         }
 
+        const currentPoint = validGridPoints[currentPointIndex];
+        setDronePosition([currentPoint.lat, currentPoint.lng]);
+
+        
+
         // random position within polygon bounds based on grid
         const lat = bounds.getSouth() + (currentRow * gridSize);
         const lng = bounds.getWest() + (currentCol * gridSize);
