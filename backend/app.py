@@ -24,10 +24,10 @@ app.config["SECRET_KEY"] = "dcdrdtrcsewdcx"
 #Database conn
 def get_db_connection():
     return pymysql.connect(
-        host='localhost',
-        user='root',
-        password='@Gideon',
-        database='react',
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        database=os.getenv("DB_NAME"),
         cursorclass=pymysql.cursors.DictCursor
     )
 
