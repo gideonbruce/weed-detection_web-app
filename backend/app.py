@@ -373,7 +373,7 @@ def update_treatment_status(plan_id):
         connection = get_db_connection()
         cursor = connection.cursor()
 
-        #First check if plan exists and its current status
+        # first check if plan exists and its current status
         cursor.execute("SELECT status FROM treatment_plans WHERE id = %s", (plan_id,))
         result = cursor.fetchone()
 
@@ -382,7 +382,7 @@ def update_treatment_status(plan_id):
             connection.close()
             return jsonify({"error": f"Treatment plan with ID {plan_id} not foumd"}), 404
         
-        #update status
+        # update status
         sql = "UPDATE treatment_plans SET status = %s WHERE id = %s"
         cursor.execute(sql, (new_status, plan_id))
         connection.commit()
