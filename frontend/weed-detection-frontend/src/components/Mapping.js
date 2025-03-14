@@ -319,7 +319,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
 
   // helper function to check if a point is insidde th polygon
   const isPointPolygon = (point, polygon) => {
-    const x point[0], y = point[1];
+    const x = point[0], y = point[1];
     let inside = false;
 
     for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
@@ -330,6 +330,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
       if (intersect) inside = !inside;
     }
+    return inside;
   }
 /*
   // Simulate drone movement when it has a position and a polygon
