@@ -206,6 +206,9 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
     const rows = Math.ceil((bounds.getNorth() - bounds.getSouth()) / gridSize);
     const cols = Math.ceil((bounds.getEast() - bounds.getWest()) / gridSize);
 
+    // precalculate grid points
+    const validGridPoints = [];
+
     let currentRow = 0;
     let currentCol = 0;
     let direction = 1; // 1 for right, -1 for left
