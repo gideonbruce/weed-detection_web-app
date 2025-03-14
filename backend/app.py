@@ -1,3 +1,4 @@
+import os
 import smtplib
 from flask import Flask, json, request, jsonify, send_file
 from ultralytics import YOLO
@@ -11,6 +12,7 @@ import bcrypt
 import jwt
 import datetime
 #from datetime import datetime
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app)
