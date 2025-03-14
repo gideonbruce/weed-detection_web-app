@@ -226,13 +226,25 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
     }
 
     // sort points in a serpentine pattern for efficient coverage
+    validGridPoints.sort((a, b) => {
+      if (a.row !== b.row) return a.row - b.row;
+      return a.row % 2 === 0 ? a.col - b.col : b.col - a.col;
+    });
 
-    let currentRow = 0;
+    let currentPointIndex = 0;
+
+    /*let currentRow = 0;
     let currentCol = 0;
-    let direction = 1; // 1 for right, -1 for left
+    let direction = 1;*/ // 1 for right, -1 for left
 
     const moveDrone = () => {
-        if (!simulationRunningRef.current) return;
+        if (!simulationRunningRef.current || currentPointIndex >= validGridPoints.length) {
+          clearInterval(interval);
+          simulationRunningRef.current = false;
+          setSimulating(false);
+          exportDetectionsToJSON();
+          return;
+        }
 
         // random position within polygon bounds based on grid
         const lat = bounds.getSouth() + (currentRow * gridSize);
