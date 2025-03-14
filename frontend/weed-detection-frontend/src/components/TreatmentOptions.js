@@ -1,4 +1,3 @@
-// File: components/TreatmentOptions.jsx
 import React from 'react';
 
 const TreatmentOptions = ({ selectedTreatment, onSelectTreatment }) => {

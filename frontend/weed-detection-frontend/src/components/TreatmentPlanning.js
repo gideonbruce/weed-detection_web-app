@@ -120,12 +120,12 @@ const TreatmentPlanning = () => {
     }
   };
 
-  // Render loading state
+  // render loading state
   if (loading) {
     return <div className="loading">Loading treatment planning data...</div>;
   }
 
-  // Render error state
+  // render error state
   if (error) {
     return (
       <div className="error-container">

@@ -18,16 +18,16 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/"       element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/home" element={isAuthenticated() ? <Home /> : <Navigate to="/" />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/farm" element={<Mapping />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/weeds-detected" element={<WeedDetectionsTable />} />
+        <Route path="/home"   element={isAuthenticated() ? <Home /> : <Navigate to="/" />} />
+        <Route path="/about"  element={<About />} />
+        <Route path="/farm"   element={<Mapping />} />
+        <Route path="/forgot-password"    element={<ForgotPassword />} />
+        <Route path="/reset-password"     element={<ResetPassword />} />
+        <Route path="/weeds-detected"     element={<WeedDetectionsTable />} />
         <Route path="/treatment-planning" element={<TreatmentPlanning />} /> 
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard"  element={<Dashboard />} />
         <Route path="/mitigation" element={<Mitigation />} />
       </Routes>
     </Router>

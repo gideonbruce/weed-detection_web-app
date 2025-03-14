@@ -1,4 +1,3 @@
-// File: components/TreatmentStats.jsx
 import React from 'react';
 
 const TreatmentStats = ({ stats }) => {
