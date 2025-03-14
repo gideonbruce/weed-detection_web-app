@@ -4,10 +4,10 @@ import 'leaflet/dist/leaflet.css';
 import { MapUpdater } from './MapUpdater';
 
 export const TreatmentMap = ({ areas = [], centerPosition = [0, 0], zoom = 16, calculatePolygonPoints }) => {
-  // Add validation to check if areas is array and not empty
+  // adding validation to check if areas is array and not empty
   const hasValidAreas = Array.isArray(areas) && areas.length > 0;
   
-  // Check if calculatePolygonPoints is defined
+  // checking if calculatePolygonPoints is defined
   if (!calculatePolygonPoints && hasValidAreas) {
     console.error("calculatePolygonPoints function is missing");
     return (

@@ -1,17 +1,15 @@
-// Helper function: Calculate distance between two points using Haversine formula
-
 import {v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth radius in meters
+    const R = 6371e3; // earth radius in meters
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;
     const Δλ = (lon2 - lon1) * Math.PI / 180;
     
     const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
+              Math.cos(φ1)   * Math.cos(φ2) *
               Math.sin(Δλ/2) * Math.sin(Δλ/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     
@@ -20,9 +18,9 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   
   // Calculate bounds of a set of weeds
 const calculateBounds = (weeds) => {
-  let minLat = Infinity;
+  let minLat =  Infinity;
   let maxLat = -Infinity;
-  let minLng = Infinity;
+  let minLng =  Infinity;
   let maxLng = -Infinity;
   
   weeds.forEach(weed => {
@@ -74,7 +72,7 @@ const calculateConvexHull = (weeds) => {
   ];
 };
   
-  // Get recommended herbicide based on weed confidence
+  // get recommended herbicide based on weed confidence
 const getRecommendedHerbicide = (confidence) => {
   if (confidence >= 90) {
     return 'High-Strength Selective Herbicide';
@@ -85,7 +83,7 @@ const getRecommendedHerbicide = (confidence) => {
   }
 };
   
-  // Create treatment zones by grouping nearby weeds
+  // creating treatment zones by grouping nearby weeds
 const createTreatmentZones = (weeds) => {
   const zones = [];
   const processed = new Set();
@@ -161,7 +159,7 @@ export const generateTreatmentPlan = (weedDetections, treatmentMethod) => {
   
   switch (treatmentMethod) {
     case 'precision':
-      // For precision treatment, we create small circular areas around each weed
+      // for precision treatment, create small circular areas around each weed
       areas = weedDetections.map(weed => {
         return {
           center: [weed.latitude, weed.longitude],
@@ -179,7 +177,7 @@ export const generateTreatmentPlan = (weedDetections, treatmentMethod) => {
       break;
       
     case 'broadcast':
-      // For broadcast, we create one large area covering all weeds
+      // For broadcast,  create one large area covering all weeds
       if (weedDetections.length > 0) {
         const bounds = calculateBounds(weedDetections);
         areas = [{
@@ -210,7 +208,7 @@ export const generateTreatmentPlan = (weedDetections, treatmentMethod) => {
   return { areas, plan };
 };
   
-  // Calculate treatment statistics
+  // calculate treatment statistics
 export const calculateTreatmentStats = (weeds, method) => {
   if (!weeds || weeds.length === 0) {
     return {
@@ -232,10 +230,10 @@ export const calculateTreatmentStats = (weeds, method) => {
   const highDensityThreshold = 5; // 5 weeds in a zone is considered high density
   const highDensityAreas = zones.filter(zone => zone.weedCount >= highDensityThreshold).length;
   
-  // Calculate estimates based on treatment method
+  // calculate estimates based on treatment method
   switch (method) {
     case 'precision':
-      // Precision spraying uses less chemical but takes more time
+      // precision spraying uses less chemical but takes more time
       chemicalUsage = totalWeeds * 0.05; // 0.05 liters per weed
       timeRequired = totalWeeds * 1; // 1 minute per weed
       costEstimate = 10 + (chemicalUsage * 20) + (timeRequired / 60 * 30); // Base cost + chemical cost + labor cost
@@ -424,8 +422,6 @@ export const aggregateDetectionsByDensity = (detections) => {
     lowDensity: []
   };
   
-  // Implement clustering algorithm (e.g., DBSCAN)
-  // ...
   
   return aggregated;
 };

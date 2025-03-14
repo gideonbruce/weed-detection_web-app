@@ -419,15 +419,15 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
           <h3 className='text-lg font-semibold text-gray-800 mb-2'>Drone Status</h3>
           <p className='text-sm text-gray-700'><span className='font-medium'>Altitude:</span> {droneAltitude} meters</p>
           <div className="flex gap-2 mt-2">
-            <button onClick={() => changeAltitude(5)} className='px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700'>+5m</button>
-            <button onClick={() => changeAltitude(-5)} className='px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700'>-5m</button>
+            <button onClick={() => changeAltitude(5)}  className='px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700'>+5m</button>
+            <button onClick={() => changeAltitude(-5)} className='px-2 py-1 bg-blue-600  text-white rounded hover:bg-blue-700 '>-5m</button>
           </div>
           
-          <h3 className='text-lg font-semibold text-gray-800 mt-3 mb-2'>Weather</h3>
+          <h3 className='text-lg font-semibold      text-gray-800 mt-3 mb-2'>Weather</h3>
           <p className='text-sm text-gray-700'><span className="font-medium">Temperature:</span> {weather.temperature}°C</p>
-          <p className='text-sm text-gray-700'><span className="font-medium">Humidity:</span> {weather.humidity}%</p>
-          <p className='text-sm text-gray-700'><span className="font-medium">Wind:</span> {weather.windSpeed} km/h {weather.windDirection}</p>
-          <p className='text-sm text-gray-700'><span className="font-medium">Conditions:</span> {weather.description}</p>
+          <p className='text-sm text-gray-700'><span className="font-medium">Humidity:   </span> {weather.humidity}%</p>
+          <p className='text-sm text-gray-700'><span className="font-medium">Wind:       </span> {weather.windSpeed} km/h {weather.windDirection}</p>
+          <p className='text-sm text-gray-700'><span className="font-medium">Conditions: </span> {weather.description}</p>
           
           <h3 className="text-lg font-semibold text-gray-800 mt-4 mb-2">Weed Detections</h3>
           <p className="text-sm text-gray-700"><span className="font-medium">Total detected:</span> {detections.length}</p>

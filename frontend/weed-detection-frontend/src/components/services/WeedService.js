@@ -1,5 +1,3 @@
-// File: services/weedService.js
-
 // Fetch weed detections from backend
 export const fetchWeedDetections = async () => {
     const response = await fetch('http://127.0.0.1:5000/get_detections');
