@@ -249,14 +249,45 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         const currentPoint = validGridPoints[currentPointIndex];
         setDronePosition([currentPoint.lat, currentPoint.lng]);
 
-        
+        let minDistanceToEdge = Number.MAX_VALUE;
+        for (let i = 0; i < polygon.length; i++) {
+          const j = (i + 1) % polygon.length;
+          const p1 = polygon[i];
+          const p2 = polygon[j];
 
-        // random position within polygon bounds based on grid
-        const lat = bounds.getSouth() + (currentRow * gridSize);
-        const lng = bounds.getWest() + (currentCol * gridSize);
-        
-        // update drone position
-        setDronePosition([lat, lng]);
+          const distance = Math.abs(
+            (p2[0] - p1[0]) * (p1[1] - currentPoint.lng) -
+            (p1[0] - currentPoint.lat) * (p2[1] - p1[1])
+          ) / Math.sqrt(
+            Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1] - p1[1], 2)
+          );
+          minDistanceToEdge = Math.min(minDistanceToEdge, distance);
+        }
+
+        const normalizedDistance = Math.min(minDistanceToEdge / gridSize, 1);
+        const detectionProbability = 0.3 + normalizedDistance * 0.4;
+
+        if (Math.random() < detectionProbability) {
+          const jitter = gridSize * 0.3;
+          const jitteredLat = currentPoint.lat + (Math.random() * jitter * 2 - jitter);
+          const jitteredLng = currentPoint.lng + (Math.random() * jitter * 2 - jitter);
+
+          if (isPointInPolygon([jitteredLat, jitteredLng], polygon)) {
+            addWeedDetection(jitteredLat, jitteredLng);
+          } else {
+            addWeedDetection(current.lat, currentPoint.lng);
+          }
+        }
+        currentPointIndex++;
+      };
+
+      const interval = setInterval(moveDrone, 500);
+
+      return () => {
+        clearInterval(interval);
+        simulationRunningRef.current = false;
+        setSimulating(false);
+      };
 
         const distanceToEdge = Math.min(
           lat - bounds.getSouth(),
