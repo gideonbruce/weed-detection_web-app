@@ -316,6 +316,12 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
       alert("Please draw a polygon area first");
     }
   };
+
+  // helper function to check if a point is insidde th polygon
+  const isPointPolygon = (point, polygon) => {
+    const x point[0], y = point[1];
+    let inside = false;
+  }
 /*
   // Simulate drone movement when it has a position and a polygon
   useEffect(() => {
