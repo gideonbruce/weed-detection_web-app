@@ -218,6 +218,13 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
       }
     }
 
+    if (validGridPoints.length === 0) {
+      alert("No valid points found in the polygon. Try drawing a larger area.");
+      simulationRunningRef.current = false;
+      setSimulating(false);
+      return;
+    }
+
     let currentRow = 0;
     let currentCol = 0;
     let direction = 1; // 1 for right, -1 for left
