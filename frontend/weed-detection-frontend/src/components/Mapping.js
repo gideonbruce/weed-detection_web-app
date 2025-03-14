@@ -225,6 +225,8 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
       return;
     }
 
+    // sort points in a serpentine pattern for efficient coverage
+
     let currentRow = 0;
     let currentCol = 0;
     let direction = 1; // 1 for right, -1 for left
