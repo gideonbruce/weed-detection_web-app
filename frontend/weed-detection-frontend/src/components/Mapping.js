@@ -275,7 +275,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
           if (isPointInPolygon([jitteredLat, jitteredLng], polygon)) {
             addWeedDetection(jitteredLat, jitteredLng);
           } else {
-            addWeedDetection(current.lat, currentPoint.lng);
+            addWeedDetection(currentPoint.lat, currentPoint.lng);
           }
         }
         currentPointIndex++;
@@ -388,7 +388,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
   };
 
   // helper function to check if a point is insidde th polygon
-  const isPointPolygon = (point, polygon) => {
+  const isPointInPolygon = (point, polygon) => {
     const x = point[0], y = point[1];
     let inside = false;
 
