@@ -208,6 +208,15 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
 
     // precalculate grid points
     const validGridPoints = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const lat = bounds.getSouth() + (r * gridSize);
+        const lng = bounds.getWest() + (c * gridSize);
+        if (isPointInPolygon([lat, lng], polygon)) {
+          validGridPoints.push({ row: r, col: c, lat, lng });
+        }
+      }
+    }
 
     let currentRow = 0;
     let currentCol = 0;
