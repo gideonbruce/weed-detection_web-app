@@ -288,8 +288,9 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         simulationRunningRef.current = false;
         setSimulating(false);
       };
+    }, [dronePosition, droneAreaPolygons, addWeedDetection, exportDetectionsToJSON]);
 
-        const distanceToEdge = Math.min(
+       /* const distanceToEdge = Math.min(
           lat - bounds.getSouth(),
           bounds.getNorth() - lat,
           lng - bounds.getWest(),
@@ -337,7 +338,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
       //clearInterval(interval);
       //setSimulating(false);
     };
-  }, [dronePosition, droneAreaPolygons, addWeedDetection, exportDetectionsToJSON ]);
+  }, [dronePosition, droneAreaPolygons, addWeedDetection, exportDetectionsToJSON ]);*/
 
 
   // Map events component to handle map interactions
