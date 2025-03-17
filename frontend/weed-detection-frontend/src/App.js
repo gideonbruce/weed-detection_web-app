@@ -18,17 +18,20 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/"       element={<Login />} />
+        {/* Public routes */}
+        <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/home"   element={isAuthenticated() ? <Home /> : <Navigate to="/" />} />
-        <Route path="/about"  element={<About />} />
-        <Route path="/farm"   element={<Mapping />} />
-        <Route path="/forgot-password"    element={<ForgotPassword />} />
-        <Route path="/reset-password"     element={<ResetPassword />} />
-        <Route path="/weeds-detected"     element={<WeedDetectionsTable />} />
-        <Route path="/treatment-planning" element={<TreatmentPlanning />} /> 
-        <Route path="/dashboard"  element={<Dashboard />} />
-        <Route path="/mitigation" element={<Mitigation />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Protected routes */}
+        <Route path="/home" element={isAuthenticated() ? <Home /> : <Navigate to="/" />} />
+        <Route path="/about" element={isAuthenticated() ? <About /> : <Navigate to="/" />} />
+        <Route path="/farm" element={isAuthenticated() ? <Mapping /> : <Navigate to="/" />} />
+        <Route path="/weeds-detected" element={isAuthenticated() ? <WeedDetectionsTable /> : <Navigate to="/" />} />
+        <Route path="/treatment-planning" element={isAuthenticated() ? <TreatmentPlanning /> : <Navigate to="/" />} />
+        <Route path="/dashboard" element={isAuthenticated() ? <Dashboard /> : <Navigate to="/" />} />
+        <Route path="/mitigation" element={isAuthenticated() ? <Mitigation /> : <Navigate to="/" />} />
       </Routes>
     </Router>
   );
