@@ -30,7 +30,8 @@ const Login = () => {
 
             if (response.ok) {
                 setToken(data.token);
-                navigate('/home');
+                // Force a page reload to ensure auth state is updated
+                window.location.href = '/home';
             } else {
                 setError(data.message || 'Login failed');
             }
