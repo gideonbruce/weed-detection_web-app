@@ -19,10 +19,10 @@ const App = () => {
     <Router>
       <Routes>
         {/* Public routes */}
-        <Route path="/" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/" element={isAuthenticated() ? <Navigate to="/home" /> : <Login />} />
+        <Route path="/signup" element={isAuthenticated() ? <Navigate to="/home" /> : <Signup />} />
+        <Route path="/forgot-password" element={isAuthenticated() ? <Navigate to="/home" /> : <ForgotPassword />} />
+        <Route path="/reset-password" element={isAuthenticated() ? <Navigate to="/home" /> : <ResetPassword />} />
 
         {/* Protected routes */}
         <Route path="/home" element={isAuthenticated() ? <Home /> : <Navigate to="/" />} />
