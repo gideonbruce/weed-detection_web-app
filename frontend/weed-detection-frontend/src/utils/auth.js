@@ -1,3 +1,8 @@
+// Clear token on app initialization
+export const initializeAuth = () => {
+    localStorage.removeItem('token');
+};
+
 export const isAuthenticated = () => {
     const token = localStorage.getItem('token');
     if (!token) return false;

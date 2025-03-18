@@ -6,13 +6,16 @@ import About from "./components/About";
 import Mapping from "./components/Mapping";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import { isAuthenticated } from "./utils/auth";
+import { isAuthenticated, initializeAuth } from "./utils/auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import WeedDetectionsTable from "./components/WeedDetectionsTable";
 import TreatmentPlanning from "./components/TreatmentPlanning";
 import Dashboard from "./components/Dashboard";
 import Mitigation from "./components/Mitigation/WeedMitigation"
+
+// Initialize auth state
+initializeAuth();
 
 const App = () => {
   return (
