@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 app = Flask(__name__)
 CORS(app)
 
-model = YOLO(os.getenv("MODEL_PATH"))  
+model = YOLO(("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-weed-model.pt"))  
 
 app.config["SECRET_KEY"] = "dcdrdtrcsewdcx"
 
