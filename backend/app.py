@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image
 import io
 from flask_cors import CORS
-import pymysql
+from pymongo import MongoClient
 import bcrypt
 import jwt
 import datetime
@@ -21,15 +21,10 @@ model = YOLO(("C:\\Users\\Bruce\\Desktop\\weed detection project\\backend\\crop-
 
 app.config["SECRET_KEY"] = "dcdrdtrcsewdcx"
 
-#Database conn
+# MongoDB connection
 def get_db_connection():
-    return pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
-        cursorclass=pymysql.cursors.DictCursor
-    )
+    client = MongoClient(os.getenv("MONGODB_URI"))
+    return client[os.getenv("MONGODB_DB_NAME")]
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -37,12 +32,8 @@ def login():
     email = data.get('email')
     password = data.get('password')
 
-    connection = get_db_connection()
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM users WHERE email=%s", (email,))
-        user = cursor.fetchone()
-
-    connection.close()
+    db = get_db_connection()
+    user = db.users.find_one({'email': email})
 
     if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
         token = jwt.encode(
@@ -64,14 +55,18 @@ def signup():
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
 
     try:
-        connection = get_db_connection()
-        with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO users (email, password_hash) VALUES (%s, %s)", (email, hashed_password))
-            connection.commit()
-        connection.close()
+        db = get_db_connection()
+        # Check if user already exists
+        if db.users.find_one({'email': email}):
+            return jsonify({'message': 'Email already exists'}), 400
+            
+        db.users.insert_one({
+            'email': email,
+            'password_hash': hashed_password
+        })
         return jsonify({'message': 'User registered successfully'}), 201
-    except pymysql.err.IntegrityError:
-        return jsonify({'message': 'Email already exists'}), 400
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
 
 @app.route("/forgot-password", methods=["POST"])
 def forgot_password():
@@ -123,31 +118,23 @@ def store_detections():
     try:
         data = request.json
         print("Received data:", data)
-
-        #if not isinstance(data, dict): # checking if its a list
-            #data = [data]
             
-        connection = get_db_connection()
-        cursor = connection.cursor()
+        db = get_db_connection()
+        detections = []
 
         for detection in data:
-            sql = """
-            INSERT INTO weed_detections (id, latitude, longitude, timestamp, confidence, mitigation_status)
-            VALUES (%s,%s,%s,%s,%s,%s)
-            """
-            values = (
-                detection['id'],
-                detection['latitude'],
-                detection['longitude'],
-                datetime.datetime.strptime(detection['timestamp'], "%Y-%m-%dT%H:%M:%S.%fZ"),
-                detection['confidence'],
-                "pending" #default mitigation status
-            )
-            cursor.execute(sql, values)
+            detection_doc = {
+                'id': detection['id'],
+                'latitude': detection['latitude'],
+                'longitude': detection['longitude'],
+                'timestamp': datetime.datetime.strptime(detection['timestamp'], "%Y-%m-%dT%H:%M:%S.%fZ"),
+                'confidence': detection['confidence'],
+                'mitigation_status': 'pending'  # default mitigation status
+            }
+            detections.append(detection_doc)
 
-        connection.commit()
-        cursor.close()
-        connection.close()
+        if detections:
+            db.weed_detections.insert_many(detections)
 
         return jsonify({"message": f"Successfully stored {len(data)} detections!"}), 201
 
@@ -158,15 +145,11 @@ def store_detections():
 @app.route('/get_detections', methods=['GET'])
 def get_detections():
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        cursor.execute("SELECT id, latitude, longitude, timestamp FROM weed_detections")
-        detections = cursor.fetchall()
-
-        cursor.close()
-        connection.close()
-
+        db = get_db_connection()
+        detections = list(db.weed_detections.find(
+            {},
+            {'_id': 0, 'id': 1, 'latitude': 1, 'longitude': 1, 'timestamp': 1}
+        ))
         return jsonify(detections), 200
     
     except Exception as e:
@@ -176,16 +159,27 @@ def get_detections():
 @app.route('/get_weed_trend', methods=['GET'])
 def get_weed_trend():
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        cursor.execute("SELECT date(timestamp) as date, COUNT(*) as weed_count FROM weed_detections GROUP BY date ORDER BY date ASC;")
-        rows = cursor.fetchall()
-
-        cursor.close()
-        connection.close()
-
-        trend_data = [{"date": row["date"], "weed_count": row["weed_count"]} for row in rows]
+        db = get_db_connection()
+        pipeline = [
+            {
+                '$group': {
+                    '_id': {'$dateToString': {'format': '%Y-%m-%d', 'date': '$timestamp'}},
+                    'weed_count': {'$sum': 1}
+                }
+            },
+            {
+                '$project': {
+                    '_id': 0,
+                    'date': '$_id',
+                    'weed_count': 1
+                }
+            },
+            {
+                '$sort': {'date': 1}
+            }
+        ]
+        
+        trend_data = list(db.weed_detections.aggregate(pipeline))
         return trend_data
     except Exception as e:
         print("Error:", str(e))
@@ -239,30 +233,22 @@ def create_treatment_plan():
             return jsonify({"error": "Missing required fields"}), 400
         
         method = data["method"]
-        areas = json.dumps(data["areas"])
+        areas = data["areas"]  # MongoDB can store JSON directly
         total_weeds = int(data["total_weeds"])
         
-        print("Recieved data:", data)
+        print("Received data:", data)
 
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        sql = """
-        INSERT INTO treatment_plans (method, areas, total_weeds)
-        VALUES (%s, %s, %s)
-        """
-        cursor.execute(sql, (method, areas, total_weeds))
-
-        connection.commit()
-        cursor.close()
-        connection.close()
-
-        return jsonify({"message": "Treatment plan added successfully"}), 201
+        db = get_db_connection()
+        plan = {
+            'method': method,
+            'areas': areas,
+            'total_weeds': total_weeds,
+            'status': 'pending'
+        }
+        
+        result = db.treatment_plans.insert_one(plan)
+        return jsonify({"message": "Treatment plan added successfully", "id": str(result.inserted_id)}), 201
     
-    except pymysql.MySQLError as e:
-        print("MySQL Error:", str(e))
-        return jsonify({"error": "Database Error", "details": str(e)}), 500
-
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
@@ -270,19 +256,8 @@ def create_treatment_plan():
 @app.route('/treatment-plans', methods=['GET'])
 def get_treatment_plans():
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        cursor.execute("SELECT * FROM treatment_plans")
-        plans = cursor.fetchall()
-
-        #for plan in plans:
-            #plan["areas"] = json.loads(plan["areas"])  # Convert JSON string to list
-
-
-        cursor.close()
-        connection.close()
-
+        db = get_db_connection()
+        plans = list(db.treatment_plans.find({}, {'_id': 0}))
         return jsonify(plans), 200
 
     except Exception as e:
@@ -301,29 +276,29 @@ def mitigate_weed():
         if not detection_id or not method or not applied_by:
             return jsonify({"error": "Missing required fields"}), 400
         
-        connection = get_db_connection()
-        cursor = connection.cursor()
+        db = get_db_connection()
+        
+        # Create mitigation record
+        mitigation = {
+            'detection_id': detection_id,
+            'method': method,
+            'applied_by': applied_by,
+            'notes': notes,
+            'timestamp': datetime.datetime.utcnow()
+        }
+        
+        db.weed_mitigations.insert_one(mitigation)
 
-        # insert into mitigation table
-        sql_insert = """
-        INSERT INTO weed_mitigations (detection_id, method, applied_by, notes)
-        VALUES (%s, %s, %s, %s)
-        """
-
-        cursor.execute(sql_insert, (detection_id, method, applied_by, notes))
-
-        #update weed detections status
-        sql_update = """
-        UPDATE weed_detections
-        SET mitigation_status = 'completed', mitigation_timestamp = NOW()
-        WHERE id = %s
-        """
-
-        cursor.execute(sql_update, (detection_id,))
-
-        connection.commit()
-        cursor.close()
-        connection.close()
+        # Update weed detection status
+        db.weed_detections.update_one(
+            {'id': detection_id},
+            {
+                '$set': {
+                    'mitigation_status': 'completed',
+                    'mitigation_timestamp': datetime.datetime.utcnow()
+                }
+            }
+        )
 
         return jsonify({"message": "Mitigation recorded successfully"}), 201
 
@@ -331,35 +306,57 @@ def mitigate_weed():
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
-
 @app.route('/get_mitigation_history', methods=['GET'])
 def get_mitigation_history():
     try:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
-        # Fixed the SQL syntax error (removed extra quotation mark)
-        cursor.execute("""
-        SELECT wd.id, wd.latitude, wd.longitude, wd.timestamp, wd.mitigation_status, 
-               wm.method, wm.applied_by, wm.timestamp as mitigation_time, wm.notes
-        FROM weed_detections wd
-        JOIN weed_mitigations wm ON wd.id = wm.detection_id
-        WHERE wd.mitigation_status = 'completed'
-        ORDER BY wm.timestamp DESC              
-        """)
-
-        history = cursor.fetchall()
-        cursor.close()
-        connection.close()
-
+        db = get_db_connection()
+        
+        pipeline = [
+            {
+                '$lookup': {
+                    'from': 'weed_mitigations',
+                    'localField': 'id',
+                    'foreignField': 'detection_id',
+                    'as': 'mitigation'
+                }
+            },
+            {
+                '$unwind': '$mitigation'
+            },
+            {
+                '$project': {
+                    '_id': 0,
+                    'id': 1,
+                    'latitude': 1,
+                    'longitude': 1,
+                    'timestamp': 1,
+                    'mitigation_status': 1,
+                    'method': '$mitigation.method',
+                    'applied_by': '$mitigation.applied_by',
+                    'mitigation_time': '$mitigation.timestamp',
+                    'notes': '$mitigation.notes'
+                }
+            },
+            {
+                '$match': {
+                    'mitigation_status': 'completed'
+                }
+            },
+            {
+                '$sort': {
+                    'mitigation_time': -1
+                }
+            }
+        ]
+        
+        history = list(db.weed_detections.aggregate(pipeline))
         return jsonify(history), 200
 
     except Exception as e:
         print("Error:", str(e))
         return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
 
-        
-@app.route('/treatment-plans/<int:plan_id>/status', methods=['PUT'])
+@app.route('/treatment-plans/<plan_id>/status', methods=['PUT'])
 def update_treatment_status(plan_id):
     try:
         data = request.get_json()
@@ -370,25 +367,19 @@ def update_treatment_status(plan_id):
             return jsonify({
                 "error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
             }), 400
-        connection = get_db_connection()
-        cursor = connection.cursor()
 
-        # first check if plan exists and its current status
-        cursor.execute("SELECT status FROM treatment_plans WHERE id = %s", (plan_id,))
-        result = cursor.fetchone()
-
-        if not result:
-            cursor.close()
-            connection.close()
-            return jsonify({"error": f"Treatment plan with ID {plan_id} not foumd"}), 404
+        db = get_db_connection()
         
-        # update status
-        sql = "UPDATE treatment_plans SET status = %s WHERE id = %s"
-        cursor.execute(sql, (new_status, plan_id))
-        connection.commit()
-
-        cursor.close()
-        connection.close()
+        # Check if plan exists
+        plan = db.treatment_plans.find_one({'_id': plan_id})
+        if not plan:
+            return jsonify({"error": f"Treatment plan with ID {plan_id} not found"}), 404
+        
+        # Update status
+        db.treatment_plans.update_one(
+            {'_id': plan_id},
+            {'$set': {'status': new_status}}
+        )
 
         return jsonify({"message": "Treatment status updated successfully"}), 200
     except Exception as e:
