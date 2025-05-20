@@ -64,13 +64,15 @@ const TreatmentPlanning = () => {
       try {
         setLoading(true);
         const data = await fetchWeedDetections();
-        setWeedDetections(data);
+        //normalize coordinates to ensure consistent precision
+        const normalizedData = normalizeCoordinates(data);
+        setWeedDetections(normalizedData);
         
         // if we have detections, center the map on the first one
-        if (data.length > 0) {
+        if (normalizedData.length > 0) {
           setMapSettings({
-            centerPosition: [data[0].latitude, data[0].longitude],
-            zoom: 17
+            centerPosition: [normalizedData[0].latitude, normalizedData[0].longitude],
+            zoom: 18
           });
         }
         
