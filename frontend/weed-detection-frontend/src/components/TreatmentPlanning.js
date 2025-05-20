@@ -13,6 +13,8 @@ import {
   saveTreatmentPlan
 } from './services/TreatmentService';
 
+const COORDINATE_PRECISION = 8; // eight decimal places
+
 const TreatmentPlanning = () => {
   const navigate = useNavigate();
   const [weedDetections, setWeedDetections] = useState([]);
