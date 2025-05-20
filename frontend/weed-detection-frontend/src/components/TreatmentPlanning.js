@@ -14,6 +14,8 @@ import {
 } from './services/TreatmentService';
 
 const COORDINATE_PRECISION = 8; // eight decimal places
+const DEFAUL_CENTER = [-0.68885, 34.78321];
+const DEFAULT_ZOOM = 16;
 
 const TreatmentPlanning = () => {
   const navigate = useNavigate();
