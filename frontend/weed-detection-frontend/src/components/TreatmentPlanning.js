@@ -18,6 +18,7 @@ const DEFAUL_CENTER = [-0.68885, 34.78321];
 const DEFAULT_ZOOM = 16;
 
 const TreatmentPlanning = () => {
+  const mapRef = useRef(null);
   const navigate = useNavigate();
   const [weedDetections, setWeedDetections] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,9 +27,10 @@ const TreatmentPlanning = () => {
   const [treatmentAreas, setTreatmentAreas] = useState([]);
   const [currentTreatmentPlan, setCurrentTreatmentPlan] = useState(null);
   const [mapSettings, setMapSettings] = useState({
-    centerPosition: [-0.68885, 34.78321],
-    zoom: 16
+    centerPosition: DEFAUL_CENTER,
+    zoom: DEFAULT_ZOOM
   });
+
   const [treatmentStats, setTreatmentStats] = useState({
     totalWeeds: 0,
     highDensityAreas: 0,
@@ -37,6 +39,8 @@ const TreatmentPlanning = () => {
     costEstimate: 0
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [selectWeed, setSelectedWeed] = useState(null);
+  const [coordinateSystem, setCoordinateSystem] = useState('WGS84');
 
   // fetch data from backend
   useEffect(() => {
