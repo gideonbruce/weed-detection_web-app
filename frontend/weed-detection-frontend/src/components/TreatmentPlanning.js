@@ -84,8 +84,9 @@ const TreatmentPlanning = () => {
         
         // For development/demo purposes - create mock data if backend is not available
         const mockData = generateMockData();
-        setWeedDetections(mockData);
-        setTreatmentStats(calculateTreatmentStats(mockData, selectedTreatment));
+        const normalizedMockData = normalizeCoordinates(mockData);
+        setWeedDetections(normalizedMockData);
+        setTreatmentStats(calculateTreatmentStats(normalizedMockData, selectedTreatment));
       } finally {
         setLoading(false);
       }
