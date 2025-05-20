@@ -42,6 +42,22 @@ const TreatmentPlanning = () => {
   const [selectWeed, setSelectedWeed] = useState(null);
   const [coordinateSystem, setCoordinateSystem] = useState('WGS84');
 
+  const normalizeCoordinates = (detections) => {
+    return detections.map(detection => ({
+      ...detection,
+      latitude: parseFloat(detection.latitude.toFixed(COORDINATE_PRECISION)),
+      longitude: parseFloat(detection.longitude.toFixed(COORDINATE_PRECISION)),
+      //adding altitude if unavailable
+      altitude: detection.altitude ? parseFloat(detection.altitude.toFixed(3)) : null,
+      //accuracy metrics
+      accuracy: detection.accuracy || null,
+      horizontalAccuracy: detection.horizontalAccuracy || null,
+      verticalAccuracy: detection.verticalAccuracy || null,
+      //timestamp for when coordinates was captured
+      timestamp: detection.timestamp || new Date().toISOString()
+    }));
+  };
+
   // fetch data from backend
   useEffect(() => {
     const loadWeedDetections = async () => {
