@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import TreatmentOptions from './TreatmentOptions';
 import TreatmentStats from './TreatmentStats'; 
@@ -39,7 +39,7 @@ const TreatmentPlanning = () => {
     costEstimate: 0
   });
   const [isSaving, setIsSaving] = useState(false);
-  const [selectWeed, setSelectedWeed] = useState(null);
+  const [selectedWeed, setSelectedWeed] = useState(null);
   const [coordinateSystem, setCoordinateSystem] = useState('WGS84');
 
   const normalizeCoordinates = (detections) => {
@@ -135,10 +135,20 @@ const TreatmentPlanning = () => {
 
     try {
       setIsSaving(true);
+      //ensuring proper formatting of coordinates
+      const planWithPreciseCoordinates = {
+        ...currentTreatmentPlan,
+        coordinateSystem: coordinateSystem,
+        weedCoordinates: currentTreatmentPlan.weedCoordinates?.map(coord => ({
+          ...coord,
+          latitude: parseFloat(coord.latitude.toFixed(COORDINATE_PRECISION)),
+          longitude: parseFloat(coord.longitude.toFixed(COORDINATE_PRECISION))
+        }))
+      }
 
-      console.log("Saving treatment plan:", currentTreatmentPlan);
+      console.log("Saving treatment plan:", planWithPreciseCoordinates);
 
-      const savedPlan = await saveTreatmentPlan(currentTreatmentPlan);
+      const savedPlan = await saveTreatmentPlan(planWithPreciseCoordinates);
       console.log("Saved plan Response:", savedPlan);
 
       setCurrentTreatmentPlan(savedPlan);
@@ -159,6 +169,15 @@ const TreatmentPlanning = () => {
       setIsSaving(false);
     }
   };
+
+  //view detailed coordinates of a specific weed detection
+  const handleSelectWeed = (weed) => {
+    setSelectedWeed(weed);
+  };
+  //coordinate system change
+  const handleCoordinateSystemChange = (system) => {
+    setCoordinateSystem(system);
+  }
 
   // render loading state
   if (loading) {
@@ -196,6 +215,31 @@ const TreatmentPlanning = () => {
           />
           
           <TreatmentStats stats={treatmentStats} />
+
+          { /*Coordinate System Selector */}
+          <div className='mt-4'>
+            <h3 className='font-medium'>Coordinate System</h3>
+            <div className='flex gap-3 mt-2'>
+              <button
+                className={`px-2 py-1 text-sm rounded ${coordinateSystem === 'WGS84' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => handleCoordinateSystemChange('WGS84')}
+              >
+                WGS84 (GPS)
+              </button>
+              <button 
+                className={`px-2 py-1 text-sm rounded ${coordinateSystem === 'UTM' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => handleCoordinateSystemChange('UTM')}
+              >
+                UTM
+              </button>
+              <button 
+                className={`px-2 py-1 text-sm rounded ${coordinateSystem === 'LOCAL' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+                onClick={() => handleCoordinateSystemChange('LOCAL')}
+              >
+                Local Grid
+              </button>
+            </div>
+          </div>
           
           {/* Action Buttons */}
           <div className="mt-6 flex gap-4">
@@ -228,10 +272,14 @@ const TreatmentPlanning = () => {
 
         {/* Map Section */}
         <TreatmentMap 
+          ref={mapRef}
           weedDetections={weedDetections}
           treatmentAreas={treatmentAreas}
           centerPosition={mapSettings.centerPosition}
           zoom={mapSettings.zoom}
+          onSelectWeed={handleSelectWeed}
+          selectedWeed={selectedWeed}
+          coordinateSystem={coordinateSystem}
         />
       </div>
     </div>
