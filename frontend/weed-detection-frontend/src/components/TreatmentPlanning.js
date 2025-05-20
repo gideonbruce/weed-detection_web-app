@@ -266,6 +266,45 @@ const TreatmentPlanning = () => {
               <p className="text-sm">Method: {currentTreatmentPlan.method}</p>
               <p className="text-sm">Created: {new Date(currentTreatmentPlan.createdAt).toLocaleString()}</p>
               <p className="text-sm">Status: {currentTreatmentPlan.status}</p>
+              <p className="text-sm">Coordinate system: {coordinateSystem}</p>
+            </div>
+          )}
+
+          {/* Selected Weed Details */}
+          {selectedWeed && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex justify-between">
+                <h3 className="font-medium">Selected Weed Details</h3>
+                <button className="text-sm text-gray-500" onClick={() => setSelectedWeed(null)}>×</button>
+              </div>
+              <table className="w-full text-sm mt-2">
+                <tbody>
+                  <tr>
+                    <td className="font-medium">Latitude:</td>
+                    <td className="text-right font-mono">{selectedWeed.latitude.toFixed(COORDINATE_PRECISION)}°</td>
+                  </tr>
+                  <tr>
+                    <td className="font-medium">Longitude:</td>
+                    <td className="text-right font-mono">{selectedWeed.longitude.toFixed(COORDINATE_PRECISION)}°</td>
+                  </tr>
+                  {selectedWeed.altitude && (
+                    <tr>
+                      <td className="font-medium">Altitude:</td>
+                      <td className="text-right font-mono">{selectedWeed.altitude.toFixed(2)} m</td>
+                    </tr>
+                  )}
+                  {selectedWeed.accuracy && (
+                    <tr>
+                      <td className="font-medium">Accuracy:</td>
+                      <td className="text-right">{selectedWeed.accuracy.toFixed(2)} m</td>
+                    </tr>
+                  )}
+                  <tr>
+                    <td className="font-medium">Detected:</td>
+                    <td className="text-right">{new Date(selectedWeed.timestamp).toLocaleString()}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
         </div>

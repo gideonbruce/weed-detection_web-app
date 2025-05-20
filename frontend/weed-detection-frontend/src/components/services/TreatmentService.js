@@ -1,6 +1,9 @@
 import {v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
+// Enhanced coordinate calculations with high precision
+const COORDINATE_PRECISION = 8;
+
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // earth radius in meters
     const φ1 = lat1 * Math.PI / 180;
@@ -16,23 +19,44 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return R * c;
   };
   
-  // Calculate bounds of a set of weeds
+  // Calculate bounds of a set of weeds with validation
 const calculateBounds = (weeds) => {
-  let minLat =  Infinity;
+  if (!Array.isArray(weeds) || weeds.length === 0) {
+    return null;
+  }
+
+  let minLat = Infinity;
   let maxLat = -Infinity;
-  let minLng =  Infinity;
+  let minLng = Infinity;
   let maxLng = -Infinity;
   
   weeds.forEach(weed => {
-    minLat = Math.min(minLat, weed.latitude);
-    maxLat = Math.max(maxLat, weed.latitude);
-    minLng = Math.min(minLng, weed.longitude);
-    maxLng = Math.max(maxLng, weed.longitude);
+    if (weed.latitude && weed.longitude) {
+      const lat = parseFloat(weed.latitude);
+      const lng = parseFloat(weed.longitude);
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        minLat = Math.min(minLat, lat);
+        maxLat = Math.max(maxLat, lat);
+        minLng = Math.min(minLng, lng);
+        maxLng = Math.max(maxLng, lng);
+      }
+    }
   });
   
+  if (minLat === Infinity || maxLat === -Infinity || minLng === Infinity || maxLng === -Infinity) {
+    return null;
+  }
+
   return {
-    southWest: [minLat, minLng],
-    northEast: [maxLat, maxLng]
+    southWest: [
+      parseFloat(minLat.toFixed(COORDINATE_PRECISION)),
+      parseFloat(minLng.toFixed(COORDINATE_PRECISION))
+    ],
+    northEast: [
+      parseFloat(maxLat.toFixed(COORDINATE_PRECISION)),
+      parseFloat(maxLng.toFixed(COORDINATE_PRECISION))
+    ]
   };
 };
   
@@ -42,6 +66,81 @@ const expandBounds = (bounds, amount) => {
     southWest: [bounds.southWest[0] - amount, bounds.southWest[1] - amount],
     northEast: [bounds.northEast[0] + amount, bounds.northEast[1] + amount]
   };
+};
+
+// Calculate center point of a polygon with high precision
+const calculatePolygonCenter = (points) => {
+  if (!Array.isArray(points) || points.length < 3) {
+    return null;
+  }
+
+  let sumLat = 0;
+  let sumLng = 0;
+  let validPoints = 0;
+
+  points.forEach(point => {
+    if (Array.isArray(point) && point.length === 2) {
+      const [lat, lng] = point;
+      if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
+        sumLat += lat;
+        sumLng += lng;
+        validPoints++;
+      }
+    }
+  });
+
+  if (validPoints === 0) {
+    return null;
+  }
+
+  return [
+    parseFloat((sumLat / validPoints).toFixed(COORDINATE_PRECISION)),
+    parseFloat((sumLng / validPoints).toFixed(COORDINATE_PRECISION))
+  ];
+};
+
+// Calculate distance between two points in meters using Haversine formula
+const calculateDistanceHaversine = (point1, point2) => {
+  if (!Array.isArray(point1) || !Array.isArray(point2) || point1.length !== 2 || point2.length !== 2) {
+    return null;
+  }
+
+  const [lat1, lng1] = point1;
+  const [lat2, lng2] = point2;
+
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = lat1 * Math.PI/180;
+  const φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lng2-lng1) * Math.PI/180;
+
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+          Math.cos(φ1) * Math.cos(φ2) *
+          Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  return R * c; // Distance in meters
+};
+
+// Calculate area of a polygon in square meters
+const calculatePolygonArea = (points) => {
+  if (!Array.isArray(points) || points.length < 3) {
+    return 0;
+  }
+
+  let area = 0;
+  const R = 6371e3; // Earth's radius in meters
+
+  for (let i = 0; i < points.length; i++) {
+    const j = (i + 1) % points.length;
+    const [lat1, lng1] = points[i];
+    const [lat2, lng2] = points[j];
+
+    area += (lng2 - lng1) * (2 + Math.sin(lat1 * Math.PI/180) + Math.sin(lat2 * Math.PI/180));
+  }
+
+  area = Math.abs(area * R * R / 2);
+  return parseFloat(area.toFixed(2)); // Area in square meters
 };
 
 // Calculate rough area in square meters from bounds
