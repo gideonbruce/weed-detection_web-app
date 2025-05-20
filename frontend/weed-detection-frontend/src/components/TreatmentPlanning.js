@@ -111,7 +111,20 @@ const TreatmentPlanning = () => {
   }, [selectedTreatment, weedDetections]);
 
   const handleExportPlan = () => {
-    exportTreatmentPlan(currentTreatmentPlan);
+    if (!currentTreatmentPlan) {
+      alert("No treatment plan to export!");
+      return;
+    }
+    //check coordinate formatting
+    const planWithPreciseCoordinates = {
+      ...currentTreatmentPlan,
+      weedCoordinates: currentTreatmentPlan.weedCoordinates?.map(coord => ({
+        ...coord,
+        latitude: parseFloat(coord.latitude.toFixed(COORDINATE_PRECISION)),
+        longitude: parseFloat(coord.longitude.toFixed(COORDINATE_PRECISION))
+      }))
+    };
+    exportTreatmentPlan(planWithPreciseCoordinates);
   };
 
   const handleSavePlan = async () => {
