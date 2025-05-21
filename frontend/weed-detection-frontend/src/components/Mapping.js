@@ -369,12 +369,35 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
     };
   //};
 
-  // Control drone altitude
+  // Control drone altitude and zoom
   const changeAltitude = (change) => {
     setDroneAltitude(prevAlt => {
       const newAlt = prevAlt + change;
-      return newAlt > 0 ? newAlt : 1; // Min 1 meter
+      if (newAlt < 5) return 5; // Min 5 meters
+      if (newAlt > 30) return 30; // Max 30 meters
+      
+      // Calculate new zoom level based on altitude
+      // Linear interpolation between zoom levels
+      // At 5m altitude -> zoom 22
+      // At 30m altitude -> zoom 10
+      const newZoom = 22 - ((newAlt - 5) * (22 - 10) / (30 - 5));
+      setZoom(newZoom);
+      
+      return newAlt;
     });
+  };
+
+  // Add zoom change handler
+  const handleZoomChange = (e) => {
+    const newZoom = e.target.getZoom();
+    setZoom(newZoom);
+    
+    // Calculate altitude based on zoom level
+    // Linear interpolation between altitudes
+    // At zoom 22 -> 5m altitude
+    // At zoom 10 -> 30m altitude
+    const newAltitude = 5 + ((22 - newZoom) * (30 - 5) / (22 - 10));
+    setDroneAltitude(Math.round(newAltitude));
   };
 
   // start drone sim
@@ -419,8 +442,8 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
           <h3 className='text-lg font-semibold text-gray-800 mb-2'>Drone Status</h3>
           <p className='text-sm text-gray-700'><span className='font-medium'>Altitude:</span> {droneAltitude} meters</p>
           <div className="flex gap-2 mt-2">
-            <button onClick={() => changeAltitude(5)}  className='px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700'>+5m</button>
-            <button onClick={() => changeAltitude(-5)} className='px-2 py-1 bg-blue-600  text-white rounded hover:bg-blue-700 '>-5m</button>
+            <button onClick={() => changeAltitude(5)} className='px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700'>+5m</button>
+            <button onClick={() => changeAltitude(-5)} className='px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700'>-5m</button>
           </div>
           
           <h3 className='text-lg font-semibold      text-gray-800 mt-3 mb-2'>Weather</h3>
@@ -475,7 +498,10 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         zoom={zoom}
         className='className="h-[70vh] w-full rounded-2xl shadow-lg overflow-hidden'
         style={{ height: "70vh", width: "100%" }}
-        whenCreated={mapInstance => { mapRef.current = mapInstance }}
+        whenCreated={mapInstance => { 
+          mapRef.current = mapInstance;
+          mapInstance.on('zoomend', handleZoomChange);
+        }}
       >
         {mapType === 'street' ? (
           <TileLayer

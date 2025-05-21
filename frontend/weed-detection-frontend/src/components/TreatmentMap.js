@@ -62,11 +62,17 @@ const TreatmentMap = ({ weedDetections, treatmentAreas, centerPosition, zoom }) 
                         [area.bounds.northEast?.[0], area.bounds.southWest?.[1]]
                       ]
                     : []) // if bounds are undefined, empty array
-            }
-              pathOptions={{ color: area.type === 'broadcast' ? 'red' : 'orange', fillOpacity: 0.3 }}
+              }
+              pathOptions={{ 
+                color: area.type === 'broadcast' ? 'red' : 
+                       area.type === 'zone' ? 'orange' : 
+                       area.type === 'precision' ? 'green' : 'gray',
+                fillOpacity: 0.3,
+                weight: 2
+              }}
             >
               <Popup>
-                <h3 className="font-semibold">{area.type === 'broadcast' ? 'Broadcast Area' : 'Treatment Zone'}</h3>
+                <h3 className="font-semibold">{area.type === 'broadcast' ? 'Broadcast Area' : area.type === 'zone' ? 'Treatment Zone' : 'Precision Treatment'}</h3>
                 <p>Weeds: {area.weedCount}</p>
               </Popup>
             </Polygon>
