@@ -50,8 +50,14 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         console.log("[DEBUG] Using treatment plan from props");
         debugObjectProperties(treatmentPlanProp, "treatmentPlanProp");
         
-        //  plan structure
+        // Ensure the plan has an ID
         const processedPlan = ensureValidTreatmentPlan(treatmentPlanProp);
+        if (!processedPlan._id && !processedPlan.id) {
+          console.error("[ERROR] Treatment plan from props has no ID");
+          setError("Treatment plan has no ID");
+          setLoading(false);
+          return;
+        }
 
         if (!processedPlan.areas) {
           console.warn("[WARN] Treatment plan from props has no areas, adding empty array");
@@ -83,6 +89,14 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
           console.log("[DEBUG] Using first plan from list:", allPlans[0]);
           const firstPlan = allPlans[0];
           
+          // Ensure the plan has an ID
+          if (!firstPlan._id && !firstPlan.id) {
+            console.error("[ERROR] First plan has no ID");
+            setError("Treatment plan has no ID");
+            setLoading(false);
+            return;
+          }
+
           // Ensure the plan has the required structure
           if (!firstPlan.areas) {
             console.warn("[WARN] First plan has no areas, adding empty array");
@@ -125,6 +139,14 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         
         console.log(`[DEBUG] Fetched plan:`, fetchedPlan);
         debugObjectProperties(fetchedPlan, "fetchedPlan");
+
+        // Ensure the plan has an ID
+        if (!fetchedPlan._id && !fetchedPlan.id) {
+          console.error("[ERROR] Fetched plan has no ID");
+          setError("Treatment plan has no ID");
+          setLoading(false);
+          return;
+        }
 
         const processedPlan = ensureValidTreatmentPlan(fetchedPlan);
         
