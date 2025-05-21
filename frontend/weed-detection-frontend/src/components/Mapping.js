@@ -50,7 +50,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
 
   // Simulated function to get weather data
   const fetchWeatherData = async (lat, lng) => {
-    // Replace with actual API call to a weather service
+   
     try {
       // Simulated data for demo
       setWeather({
@@ -162,7 +162,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
     }
 
     const newDetection = {
-      id: Date.now(), // using timestamp as unique id
+      id: Date.now(), 
       position: [lat, lng],
       latitude: lat,
       longitude: lng,
@@ -265,7 +265,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         }
 
         const normalizedDistance = Math.min(minDistanceToEdge / gridSize, 1);
-        const detectionProbability = 0.3 + normalizedDistance * 0.4;
+        const detectionProbability = 0.5 + normalizedDistance * 0.4;
 
         if (Math.random() < detectionProbability) {
           const jitter = gridSize * 0.3;
