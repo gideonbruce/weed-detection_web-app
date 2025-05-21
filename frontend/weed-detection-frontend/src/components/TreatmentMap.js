@@ -25,13 +25,13 @@ const TreatmentMap = ({ weedDetections, treatmentAreas, centerPosition, zoom }) 
           style={{ height: "400px", width: "100%" }}
         >
           <LayersControl position="topright">
-            <LayersControl.BaseLayer checked name="OpenStreetMap">
+            <LayersControl.BaseLayer name="OpenStreetMap">
               <TileLayer
                 attribution='&copy; OpenStreetMap contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
             </LayersControl.BaseLayer>
-            <LayersControl.BaseLayer name="Satellite">
+            <LayersControl.BaseLayer checked name="Satellite">
               <TileLayer
                 attribution='&copy; Google Maps'
                 url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
