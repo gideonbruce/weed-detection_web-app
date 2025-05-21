@@ -50,8 +50,14 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         console.log("[DEBUG] Using treatment plan from props");
         debugObjectProperties(treatmentPlanProp, "treatmentPlanProp");
         
-        //  plan structure
+        // Ensure the plan has an ID
         const processedPlan = ensureValidTreatmentPlan(treatmentPlanProp);
+        if (!processedPlan._id && !processedPlan.id) {
+          console.error("[ERROR] Treatment plan from props has no ID");
+          setError("Treatment plan has no ID");
+          setLoading(false);
+          return;
+        }
 
         if (!processedPlan.areas) {
           console.warn("[WARN] Treatment plan from props has no areas, adding empty array");
@@ -83,6 +89,14 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
           console.log("[DEBUG] Using first plan from list:", allPlans[0]);
           const firstPlan = allPlans[0];
           
+          // Ensure the plan has an ID
+          if (!firstPlan._id && !firstPlan.id) {
+            console.error("[ERROR] First plan has no ID");
+            setError("Treatment plan has no ID");
+            setLoading(false);
+            return;
+          }
+
           // Ensure the plan has the required structure
           if (!firstPlan.areas) {
             console.warn("[WARN] First plan has no areas, adding empty array");
@@ -125,6 +139,14 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         
         console.log(`[DEBUG] Fetched plan:`, fetchedPlan);
         debugObjectProperties(fetchedPlan, "fetchedPlan");
+
+        // Ensure the plan has an ID
+        if (!fetchedPlan._id && !fetchedPlan.id) {
+          console.error("[ERROR] Fetched plan has no ID");
+          setError("Treatment plan has no ID");
+          setLoading(false);
+          return;
+        }
 
         const processedPlan = ensureValidTreatmentPlan(fetchedPlan);
         
@@ -217,18 +239,46 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
 
   const handleStartTreatment = async () => {
     console.log("[DEBUG] handleStartTreatment called");
-    if (!treatmentPlan || !treatmentPlan.id) {
-      console.error("[ERROR] Cannot start treatment: Invalid treatment plan");
+    console.log("[DEBUG] Current treatment plan:", treatmentPlan);
+    console.log("[DEBUG] Treatment plan properties:", {
+      hasPlan: !!treatmentPlan,
+      hasId: !!(treatmentPlan?._id || treatmentPlan?.id),
+      hasMethod: !!treatmentPlan?.method,
+      hasAreas: !!treatmentPlan?.areas,
+      areasLength: treatmentPlan?.areas?.length
+    });
+
+    if (!treatmentPlan) {
+      console.error("[ERROR] Cannot start treatment: treatmentPlan is null or undefined");
       setError("Cannot start treatment: Invalid treatment plan.");
+      return;
+    }
+
+    if (!treatmentPlan._id && !treatmentPlan.id) {
+      console.error("[ERROR] Cannot start treatment: treatmentPlan has no ID");
+      setError("Cannot start treatment: Treatment plan has no ID.");
+      return;
+    }
+
+    if (!treatmentPlan.method) {
+      console.error("[ERROR] Cannot start treatment: treatmentPlan has no method");
+      setError("Cannot start treatment: Treatment plan has no method specified.");
+      return;
+    }
+
+    if (!treatmentPlan.areas || !Array.isArray(treatmentPlan.areas) || treatmentPlan.areas.length === 0) {
+      console.error("[ERROR] Cannot start treatment: treatmentPlan has no valid areas");
+      setError("Cannot start treatment: Treatment plan has no valid areas.");
       return;
     }
 
     try {
       // update the plan status in the database first
-      console.log(`[DEBUG] Updating treatment plan ID ${treatmentPlan.id}, type:${typeof treatmentPlan.id}`);
+      const planId = treatmentPlan._id || treatmentPlan.id;
+      console.log(`[DEBUG] Updating treatment plan ID ${planId}, type:${typeof planId}`);
 
-      console.log(`[DEBUG] Updating treatment plan ${treatmentPlan.id} status to in-progress`);
-      await updateTreatmentPlanStatus(treatmentPlan.id, 'in-progress');
+      console.log(`[DEBUG] Updating treatment plan ${planId} status to in-progress`);
+      await updateTreatmentPlanStatus(planId, 'in-progress');
       
       setTreatmentStatus('inProgress');
       setStatusMessage('Sending treatment command...');
@@ -245,7 +295,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         });
       }, 1000);
       
-      console.log("[DEBUG] Sending treatment command");
+      console.log("[DEBUG] Sending treatment command with plan:", treatmentPlan);
       const result = await sendTreatmentCommand(treatmentPlan);
       
       clearInterval(progressInterval);
@@ -253,7 +303,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       if (result.success) {
         console.log("[DEBUG] Treatment command successful");
         // updating the plan status to completed in the database
-        await updateTreatmentPlanStatus(treatmentPlan.id, 'completed');
+        await updateTreatmentPlanStatus(planId, 'completed');
         
         setTreatmentProgress(100);
         setTreatmentStatus('completed');
@@ -261,7 +311,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       } else {
         console.error("[ERROR] Treatment command failed:", result.message);
         // updating the plan status to indicate an error
-        await updateTreatmentPlanStatus(treatmentPlan.id, 'error');
+        await updateTreatmentPlanStatus(planId, 'error');
         
         setTreatmentStatus('error');
         setStatusMessage(result.message || 'Treatment failed with an unknown error.');

@@ -102,95 +102,142 @@ export const sendTreatmentCommand = async (treatmentPlan) => {
     if (!treatmentPlan || !treatmentPlan.method) {
       throw new Error("Invalid treatment plan: missing method");
     }
-    
-    // First, get actual weed detections that we can use
-    console.log(`[DEBUG] Fetching weed detections for treatment`);
-    let detectionIds = [];
-    
-    try {
-      const detectionsResponse = await fetch('http://127.0.0.1:5000/get_detections');
-      if (!detectionsResponse.ok) {
-        throw new Error(`Failed to fetch detections: ${detectionsResponse.statusText}`);
-      }
-      
-      const detections = await detectionsResponse.json();
-      console.log(`[DEBUG] Found ${detections.length} weed detections`);
-      
-      // Get the IDs from the detections
-      detectionIds = detections.map(detection => detection.id);
-      
-      if (detectionIds.length === 0) {
-        throw new Error("No weed detections found to mitigate");
-      }
-    } catch (error) {
-      console.error(`[ERROR] Error fetching detections:`, error);
-      throw error;
+
+    // Get the treatment areas from the plan
+    const areas = treatmentPlan.areas || [];
+    if (areas.length === 0) {
+      throw new Error("No treatment areas defined in the plan");
     }
-    
-    // Process up to 5 detections (to avoid overwhelming the system)
-    const detectionLimit = Math.min(5, detectionIds.length);
-    console.log(`[DEBUG] Will process ${detectionLimit} detections`);
-    
-    const mitigationPromises = [];
-    
-    for (let i = 0; i < detectionLimit; i++) {
-      const detectionId = detectionIds[i];
-      
-      // Create a mitigation request
+
+    // For broadcast treatment, we'll treat all weeds in the area
+    if (treatmentPlan.method === 'broadcast') {
+      const area = areas[0]; // Broadcast has only one area
+      if (!area.bounds) {
+        throw new Error("Invalid broadcast area: missing bounds");
+      }
+
+      // Create a mitigation request for the broadcast area
       const mitigationData = {
-        detection_id: detectionId,
-        method: treatmentPlan.method, 
+        method: treatmentPlan.method,
         applied_by: "automated-system",
-        notes: `Automated treatment from plan ${treatmentPlan.id || 'unknown'}`
+        notes: `Broadcast treatment from plan ${treatmentPlan._id || 'unknown'}`,
+        bounds: area.bounds,
+        herbicide: area.herbicide
       };
       
-      console.log(`[DEBUG] Sending mitigation request for detection ${detectionId}:`, mitigationData);
+      console.log(`[DEBUG] Sending broadcast mitigation request:`, mitigationData);
       
-      const mitigationPromise = fetch('http://127.0.0.1:5000/mitigate_weed', {
+      const response = await fetch('http://127.0.0.1:5000/mitigate_weed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mitigationData),
-      })
-      .then(async response => {
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed with status ${response.status}: ${errorText}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log(`[DEBUG] Mitigation successful for detection ${detectionId}:`, data);
-        return { success: true, detectionId, data };
-      })
-      .catch(error => {
-        console.error(`[ERROR] Mitigation failed for detection ${detectionId}:`, error);
-        return { success: false, detectionId, error: error.message };
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed with status ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log(`[DEBUG] Broadcast mitigation successful:`, result);
       
-      mitigationPromises.push(mitigationPromise);
-    }
-    
-    // Process all the mitigation requests
-    const results = await Promise.all(mitigationPromises);
-    
-    // Count successes and failures
-    const successes = results.filter(result => result.success).length;
-    const failures = results.filter(result => !result.success).length;
-    
-    if (successes > 0) {
-      console.log(`[DEBUG] ${successes} mitigation requests completed successfully, ${failures} failed`);
       return { 
         success: true, 
-        message: `Successfully treated ${successes} weed detections${failures > 0 ? `, ${failures} failed` : ''}`, 
-        details: results 
+        message: `Successfully applied broadcast treatment to ${area.weedCount} weeds`, 
+        details: result 
       };
-    } else {
-      console.error(`[ERROR] All mitigation requests failed`);
-      return { 
-        success: false, 
-        message: "Failed to execute any mitigation actions", 
-        details: results
-      };
+    } 
+    // For precision and zone treatments, we'll process individual weeds
+    else {
+      // First, get actual weed detections that we can use
+      console.log(`[DEBUG] Fetching weed detections for treatment`);
+      let detectionIds = [];
+      
+      try {
+        const detectionsResponse = await fetch('http://127.0.0.1:5000/get_detections');
+        if (!detectionsResponse.ok) {
+          throw new Error(`Failed to fetch detections: ${detectionsResponse.statusText}`);
+        }
+        
+        const detections = await detectionsResponse.json();
+        console.log(`[DEBUG] Found ${detections.length} weed detections`);
+        
+        // Get the IDs from the detections - use _id if available, otherwise use id
+        detectionIds = detections.map(detection => detection._id || detection.id);
+        
+        if (detectionIds.length === 0) {
+          throw new Error("No weed detections found to mitigate");
+        }
+      } catch (error) {
+        console.error(`[ERROR] Error fetching detections:`, error);
+        throw error;
+      }
+      
+      // Process up to 5 detections (to avoid overwhelming the system)
+      const detectionLimit = Math.min(5, detectionIds.length);
+      console.log(`[DEBUG] Will process ${detectionLimit} detections`);
+      
+      const mitigationPromises = [];
+      
+      for (let i = 0; i < detectionLimit; i++) {
+        const detectionId = detectionIds[i];
+        
+        // Create a mitigation request
+        const mitigationData = {
+          detection_id: detectionId,
+          method: treatmentPlan.method, 
+          applied_by: "automated-system",
+          notes: `Automated treatment from plan ${treatmentPlan._id || 'unknown'}`
+        };
+        
+        console.log(`[DEBUG] Sending mitigation request for detection ${detectionId}:`, mitigationData);
+        
+        const mitigationPromise = fetch('http://127.0.0.1:5000/mitigate_weed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mitigationData),
+        })
+        .then(async response => {
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed with status ${response.status}: ${errorText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log(`[DEBUG] Mitigation successful for detection ${detectionId}:`, data);
+          return { success: true, detectionId, data };
+        })
+        .catch(error => {
+          console.error(`[ERROR] Mitigation failed for detection ${detectionId}:`, error);
+          return { success: false, detectionId, error: error.message };
+        });
+        
+        mitigationPromises.push(mitigationPromise);
+      }
+      
+      // Process all the mitigation requests
+      const results = await Promise.all(mitigationPromises);
+      
+      // Count successes and failures
+      const successes = results.filter(result => result.success).length;
+      const failures = results.filter(result => !result.success).length;
+      
+      if (successes > 0) {
+        console.log(`[DEBUG] ${successes} mitigation requests completed successfully, ${failures} failed`);
+        return { 
+          success: true, 
+          message: `Successfully treated ${successes} weed detections${failures > 0 ? `, ${failures} failed` : ''}`, 
+          details: results 
+        };
+      } else {
+        console.error(`[ERROR] All mitigation requests failed`);
+        return { 
+          success: false, 
+          message: "Failed to execute any mitigation actions", 
+          details: results
+        };
+      }
     }
   } catch (error) {
     console.error(`[ERROR] Error in treatment execution:`, error);
@@ -564,16 +611,8 @@ export const updateTreatmentPlanStatus = async (planId, status) => {
       throw new Error(`Invalid status: must be one of ${validStatuses.join(', ')}`);
     }
 
-    // Make sure planId is a number for the backend route
-    const numericPlanId = parseInt(planId, 10);
-    
-    // Check if planId is actually a number
-    if (isNaN(numericPlanId)) {
-      console.error(`[ERROR] Invalid plan ID: ${planId} is not a number`);
-      throw new Error("Invalid plan ID format");
-    }
-    
-    const response = await fetch(`http://127.0.0.1:5000/treatment-plans/${numericPlanId}/status`, {
+    // Use the planId as is - it's already a string from MongoDB
+    const response = await fetch(`http://127.0.0.1:5000/treatment-plans/${planId}/status`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),

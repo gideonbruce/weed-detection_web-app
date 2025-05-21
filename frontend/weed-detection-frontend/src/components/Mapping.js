@@ -7,11 +7,9 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet.heat';
 
-
 // Import custom weed icon
 import weedIconImg from './assets/weed-icon.png';
 
-// Fix for Leaflet icon issue in React
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
@@ -22,16 +20,17 @@ L.Icon.Default.mergeOptions({
 // Custom weed icon
 const weedIcon = L.icon({
   iconUrl: weedIconImg,
-  iconSize: [16, 16],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
+  iconSize: [10, 10],
+  iconAnchor: [12, 24],
+  popupAnchor: [0, -24],
 });
 
 const WeedDetectionMap = ({ onDetectionsUpdate }) => {
-  const [center, setCenter] = useState([-0.68885, 34.78321]); 
-  const [zoom, setZoom] = useState(16);
+  const [center, setCenter] = useState([0.6651262415651624, 35.2378296522736]);
+  const [zoom, setZoom] = useState(20);
   const [detections, setDetections] = useState([]);
   const [droneAltitude, setDroneAltitude] = useState(10); // meters
+  const [mapType, setMapType] = useState('satellite');
   const [weather, setWeather] = useState({
     temperature: 0,
     humidity: 0,
@@ -50,7 +49,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
 
   // Simulated function to get weather data
   const fetchWeatherData = async (lat, lng) => {
-    // Replace with actual API call to a weather service
+   
     try {
       // Simulated data for demo
       setWeather({
@@ -162,7 +161,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
     }
 
     const newDetection = {
-      id: Date.now(), // using timestamp as unique id
+      id: Date.now(), 
       position: [lat, lng],
       latitude: lat,
       longitude: lng,
@@ -265,7 +264,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         }
 
         const normalizedDistance = Math.min(minDistanceToEdge / gridSize, 1);
-        const detectionProbability = 0.3 + normalizedDistance * 0.4;
+        const detectionProbability = 0.5 + normalizedDistance * 0.4;
 
         if (Math.random() < detectionProbability) {
           const jitter = gridSize * 0.3;
@@ -369,12 +368,35 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
     };
   //};
 
-  // Control drone altitude
+  // Control drone altitude and zoom
   const changeAltitude = (change) => {
     setDroneAltitude(prevAlt => {
       const newAlt = prevAlt + change;
-      return newAlt > 0 ? newAlt : 1; // Min 1 meter
+      if (newAlt < 5) return 5; // Min 5 meters
+      if (newAlt > 30) return 30; // Max 30 meters
+      
+      // Calculate new zoom level based on altitude
+      // Linear interpolation between zoom levels
+      // At 5m altitude -> zoom 22
+      // At 30m altitude -> zoom 10
+      const newZoom = 22 - ((newAlt - 5) * (22 - 10) / (30 - 5));
+      setZoom(newZoom);
+      
+      return newAlt;
     });
+  };
+
+  // Add zoom change handler
+  const handleZoomChange = (e) => {
+    const newZoom = e.target.getZoom();
+    setZoom(newZoom);
+    
+    // Calculate altitude based on zoom level
+    // Linear interpolation between altitudes
+    // At zoom 22 -> 5m altitude
+    // At zoom 10 -> 30m altitude
+    const newAltitude = 5 + ((22 - newZoom) * (30 - 5) / (22 - 10));
+    setDroneAltitude(Math.round(newAltitude));
   };
 
   // start drone sim
@@ -419,8 +441,8 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
           <h3 className='text-lg font-semibold text-gray-800 mb-2'>Drone Status</h3>
           <p className='text-sm text-gray-700'><span className='font-medium'>Altitude:</span> {droneAltitude} meters</p>
           <div className="flex gap-2 mt-2">
-            <button onClick={() => changeAltitude(5)}  className='px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700'>+5m</button>
-            <button onClick={() => changeAltitude(-5)} className='px-2 py-1 bg-blue-600  text-white rounded hover:bg-blue-700 '>-5m</button>
+            <button onClick={() => changeAltitude(5)} className='px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700'>+5m</button>
+            <button onClick={() => changeAltitude(-5)} className='px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700'>-5m</button>
           </div>
           
           <h3 className='text-lg font-semibold      text-gray-800 mt-3 mb-2'>Weather</h3>
@@ -451,6 +473,13 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
             </button>
 
             <button
+              onClick={() => setMapType(mapType === 'street' ? 'satellite' : 'street')}
+              className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700"
+            >
+              {mapType === 'street' ? 'Satellite View' : 'Street View'}
+            </button>
+
+            <button
               onClick={exportDetectionsToJSON}
               disabled={detections.length === 0}
               className={`px-2 py-1 text-xs rounded text-white ${
@@ -468,12 +497,22 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         zoom={zoom}
         className='className="h-[70vh] w-full rounded-2xl shadow-lg overflow-hidden'
         style={{ height: "70vh", width: "100%" }}
-        whenCreated={mapInstance => { mapRef.current = mapInstance }}
+        whenCreated={mapInstance => { 
+          mapRef.current = mapInstance;
+          mapInstance.on('zoomend', handleZoomChange);
+        }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {mapType === 'street' ? (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        ) : (
+          <TileLayer
+            attribution='&copy; <a href="https://www.google.com/maps">Google Maps</a>'
+            url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+          />
+        )}
         <FeatureGroup>
           <EditControl
             position="topright"

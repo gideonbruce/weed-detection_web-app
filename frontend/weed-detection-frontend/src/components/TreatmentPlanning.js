@@ -13,8 +13,8 @@ import {
   saveTreatmentPlan
 } from './services/TreatmentService';
 
-const COORDINATE_PRECISION = 8; // eight decimal places
-const DEFAUL_CENTER = [-0.68885, 34.78321];
+const COORDINATE_PRECISION = 8; 
+const DEFAUL_CENTER = [0.6651262415651624, 35.2378296522736];
 const DEFAULT_ZOOM = 16;
 
 const TreatmentPlanning = () => {
@@ -27,8 +27,8 @@ const TreatmentPlanning = () => {
   const [treatmentAreas, setTreatmentAreas] = useState([]);
   const [currentTreatmentPlan, setCurrentTreatmentPlan] = useState(null);
   const [mapSettings, setMapSettings] = useState({
-    centerPosition: DEFAUL_CENTER,
-    zoom: DEFAULT_ZOOM
+    centerPosition: [0.6651262415651624, 35.2378296522736],
+    zoom: 16
   });
 
   const [treatmentStats, setTreatmentStats] = useState({
@@ -64,29 +64,27 @@ const TreatmentPlanning = () => {
       try {
         setLoading(true);
         const data = await fetchWeedDetections();
-        //normalize coordinates to ensure consistent precision
-        const normalizedData = normalizeCoordinates(data);
-        setWeedDetections(normalizedData);
+        console.log('Fetched weed detections:', data); // Debug log
+        
+        // Filter for pending weeds
+        const pendingWeeds = data.filter(weed => weed.mitigation_status === 'pending');
+        console.log('Pending weeds:', pendingWeeds); // Debug log
+        
+        setWeedDetections(pendingWeeds);
         
         // if we have detections, center the map on the first one
-        if (normalizedData.length > 0) {
+        if (pendingWeeds.length > 0) {
           setMapSettings({
-            centerPosition: [normalizedData[0].latitude, normalizedData[0].longitude],
-            zoom: 18
+            centerPosition: [pendingWeeds[0].latitude, pendingWeeds[0].longitude],
+            zoom: 17
           });
         }
         
-        // calculate stats based on weed detections
-        setTreatmentStats(calculateTreatmentStats(data, selectedTreatment));
+        // calculate stats based on pending weed detections
+        setTreatmentStats(calculateTreatmentStats(pendingWeeds, selectedTreatment));
       } catch (err) {
         console.error("Error fetching weed detections:", err);
         setError(err.message);
-        
-        // For development/demo purposes - create mock data if backend is not available
-        const mockData = generateMockData();
-        const normalizedMockData = normalizeCoordinates(mockData);
-        setWeedDetections(normalizedMockData);
-        setTreatmentStats(calculateTreatmentStats(normalizedMockData, selectedTreatment));
       } finally {
         setLoading(false);
       }
@@ -190,7 +188,6 @@ const TreatmentPlanning = () => {
       <div className="error-container">
         <h2>Error loading weed detection data</h2>
         <p>{error}</p>
-        <p>Using mock data for demonstration</p>
       </div>
     );
   }
