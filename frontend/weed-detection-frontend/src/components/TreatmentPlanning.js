@@ -13,7 +13,7 @@ import {
   saveTreatmentPlan
 } from './services/TreatmentService';
 
-const COORDINATE_PRECISION = 8; // eight decimal places
+const COORDINATE_PRECISION = 8; 
 const DEFAUL_CENTER = [0.6651262415651624, 35.2378296522736];
 const DEFAULT_ZOOM = 16;
 

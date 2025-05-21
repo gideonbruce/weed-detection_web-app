@@ -258,10 +258,10 @@ def create_treatment_plan():
 def get_treatment_plans():
     try:
         db = get_db_connection()
-        # Include _id in the projection
+
         plans = list(db.treatment_plans.find({}, {'_id': 1, 'method': 1, 'areas': 1, 'total_weeds': 1, 'status': 1}))
         
-        # Convert ObjectId to string for JSON serialization
+        # Converting ObjectId to string for JSON serialization
         for plan in plans:
             plan['_id'] = str(plan['_id'])
             

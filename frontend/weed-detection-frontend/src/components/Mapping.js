@@ -10,7 +10,6 @@ import 'leaflet.heat';
 // Import custom weed icon
 import weedIconImg from './assets/weed-icon.png';
 
-// Fix for Leaflet icon issue in React
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
