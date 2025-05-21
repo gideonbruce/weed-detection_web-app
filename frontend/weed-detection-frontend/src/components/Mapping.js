@@ -31,7 +31,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
   const [zoom, setZoom] = useState(20);
   const [detections, setDetections] = useState([]);
   const [droneAltitude, setDroneAltitude] = useState(10); // meters
-  const [mapType, setMapType] = useState('street');
+  const [mapType, setMapType] = useState('satellite');
   const [weather, setWeather] = useState({
     temperature: 0,
     humidity: 0,
