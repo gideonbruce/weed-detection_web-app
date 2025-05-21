@@ -1,5 +1,5 @@
-import React from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon } from 'react-leaflet';
+import React, { useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -21,10 +21,20 @@ const TreatmentMap = ({ weedDetections, treatmentAreas, centerPosition, zoom }) 
           zoom={zoom}
           style={{ height: "400px", width: "100%" }}
         >
-          <TileLayer
-            attribution='&copy; OpenStreetMap contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          <LayersControl position="topright">
+            <LayersControl.BaseLayer checked name="OpenStreetMap">
+              <TileLayer
+                attribution='&copy; OpenStreetMap contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="Satellite">
+              <TileLayer
+                attribution='&copy; Google Maps'
+                url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+              />
+            </LayersControl.BaseLayer>
+          </LayersControl>
 
           {/* Weed Detections */}
           {weedDetections.map(weed => (
