@@ -217,7 +217,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
 
   const handleStartTreatment = async () => {
     console.log("[DEBUG] handleStartTreatment called");
-    if (!treatmentPlan || !treatmentPlan.id) {
+    if (!treatmentPlan || (!treatmentPlan._id && !treatmentPlan.id)) {
       console.error("[ERROR] Cannot start treatment: Invalid treatment plan");
       setError("Cannot start treatment: Invalid treatment plan.");
       return;
@@ -225,10 +225,11 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
 
     try {
       // update the plan status in the database first
-      console.log(`[DEBUG] Updating treatment plan ID ${treatmentPlan.id}, type:${typeof treatmentPlan.id}`);
+      const planId = treatmentPlan._id || treatmentPlan.id;
+      console.log(`[DEBUG] Updating treatment plan ID ${planId}, type:${typeof planId}`);
 
-      console.log(`[DEBUG] Updating treatment plan ${treatmentPlan.id} status to in-progress`);
-      await updateTreatmentPlanStatus(treatmentPlan.id, 'in-progress');
+      console.log(`[DEBUG] Updating treatment plan ${planId} status to in-progress`);
+      await updateTreatmentPlanStatus(planId, 'in-progress');
       
       setTreatmentStatus('inProgress');
       setStatusMessage('Sending treatment command...');
@@ -253,7 +254,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       if (result.success) {
         console.log("[DEBUG] Treatment command successful");
         // updating the plan status to completed in the database
-        await updateTreatmentPlanStatus(treatmentPlan.id, 'completed');
+        await updateTreatmentPlanStatus(planId, 'completed');
         
         setTreatmentProgress(100);
         setTreatmentStatus('completed');
@@ -261,7 +262,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
       } else {
         console.error("[ERROR] Treatment command failed:", result.message);
         // updating the plan status to indicate an error
-        await updateTreatmentPlanStatus(treatmentPlan.id, 'error');
+        await updateTreatmentPlanStatus(planId, 'error');
         
         setTreatmentStatus('error');
         setStatusMessage(result.message || 'Treatment failed with an unknown error.');

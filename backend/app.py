@@ -13,6 +13,7 @@ import jwt
 import datetime
 #from datetime import datetime
 from dotenv import load_dotenv
+from bson.objectid import ObjectId
 
 app = Flask(__name__)
 CORS(app)
@@ -233,7 +234,7 @@ def create_treatment_plan():
             return jsonify({"error": "Missing required fields"}), 400
         
         method = data["method"]
-        areas = data["areas"]  # MongoDB can store JSON directly
+        areas = data["areas"]  
         total_weeds = int(data["total_weeds"])
         
         print("Received data:", data)
@@ -268,39 +269,101 @@ def get_treatment_plans():
 def mitigate_weed():
     try:
         data = request.json
-        detection_id = data.get('detection_id')
         method = data.get('method')
         applied_by = data.get('applied_by')
         notes = data.get('notes', '')
 
-        if not detection_id or not method or not applied_by:
+        if not method or not applied_by:
             return jsonify({"error": "Missing required fields"}), 400
         
         db = get_db_connection()
         
-        # Create mitigation record
-        mitigation = {
-            'detection_id': detection_id,
-            'method': method,
-            'applied_by': applied_by,
-            'notes': notes,
-            'timestamp': datetime.datetime.utcnow()
-        }
-        
-        db.weed_mitigations.insert_one(mitigation)
-
-        # Update weed detection status
-        db.weed_detections.update_one(
-            {'id': detection_id},
-            {
-                '$set': {
-                    'mitigation_status': 'completed',
-                    'mitigation_timestamp': datetime.datetime.utcnow()
+        # Handle broadcast treatment
+        if method == 'broadcast':
+            bounds = data.get('bounds')
+            herbicide = data.get('herbicide')
+            
+            if not bounds:
+                return jsonify({"error": "Missing bounds for broadcast treatment"}), 400
+            
+            # Find all weeds within the bounds
+            weeds = list(db.weed_detections.find({
+                'latitude': {'$gte': bounds['southWest'][0], '$lte': bounds['northEast'][0]},
+                'longitude': {'$gte': bounds['southWest'][1], '$lte': bounds['northEast'][1]}
+            }))
+            
+            if not weeds:
+                return jsonify({"error": "No weeds found in the specified area"}), 404
+            
+            # Create mitigation record for each weed
+            for weed in weeds:
+                mitigation = {
+                    'detection_id': weed['_id'],
+                    'method': method,
+                    'applied_by': applied_by,
+                    'notes': notes,
+                    'herbicide': herbicide,
+                    'timestamp': datetime.datetime.utcnow()
                 }
+                db.weed_mitigations.insert_one(mitigation)
+                
+                # Update weed detection status
+                db.weed_detections.update_one(
+                    {'_id': weed['_id']},
+                    {
+                        '$set': {
+                            'mitigation_status': 'completed',
+                            'mitigation_timestamp': datetime.datetime.utcnow()
+                        }
+                    }
+                )
+            
+            return jsonify({
+                "message": f"Broadcast treatment applied successfully to {len(weeds)} weeds",
+                "treated_count": len(weeds)
+            }), 201
+        
+        # Handle individual weed treatment
+        else:
+            detection_id = data.get('detection_id')
+            if not detection_id:
+                return jsonify({"error": "Missing detection_id for individual treatment"}), 400
+            
+            # Try to convert detection_id to ObjectId if it's a string
+            try:
+                if isinstance(detection_id, str):
+                    detection_id = ObjectId(detection_id)
+            except Exception as e:
+                print(f"Error converting detection_id to ObjectId: {str(e)}")
+                # If conversion fails, try to find by string id
+                pass
+            
+            # Create mitigation record
+            mitigation = {
+                'detection_id': detection_id,
+                'method': method,
+                'applied_by': applied_by,
+                'notes': notes,
+                'timestamp': datetime.datetime.utcnow()
             }
-        )
+            
+            db.weed_mitigations.insert_one(mitigation)
 
-        return jsonify({"message": "Mitigation recorded successfully"}), 201
+            # Update weed detection status - try both _id and id fields
+            update_result = db.weed_detections.update_one(
+                {'$or': [{'_id': detection_id}, {'id': detection_id}]},
+                {
+                    '$set': {
+                        'mitigation_status': 'completed',
+                        'mitigation_timestamp': datetime.datetime.utcnow()
+                    }
+                }
+            )
+
+            if update_result.matched_count == 0:
+                return jsonify({"error": "Weed detection not found"}), 404
+
+            return jsonify({"message": "Mitigation recorded successfully"}), 201
 
     except Exception as e:
         print("Error:", str(e))
@@ -365,10 +428,16 @@ def update_treatment_status(plan_id):
         valid_statuses = ['pending', 'in-progress', 'completed', 'error']
         if not new_status or new_status not in valid_statuses:
             return jsonify({
-                "error": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+                "error": f"Invalid status. Must be one of: {', '.join(validStatuses)}"
             }), 400
 
         db = get_db_connection()
+        
+        # Convert string ID to ObjectId
+        try:
+            plan_id = ObjectId(plan_id)
+        except:
+            return jsonify({"error": "Invalid plan ID format"}), 400
         
         # Check if plan exists
         plan = db.treatment_plans.find_one({'_id': plan_id})
