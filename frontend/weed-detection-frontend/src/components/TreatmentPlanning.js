@@ -44,30 +44,27 @@ const TreatmentPlanning = () => {
       try {
         setLoading(true);
         const data = await fetchWeedDetections();
-        // Filter out completed weeds
-        const activeWeeds = data.filter(weed => weed.mitigation_status !== 'completed');
-        setWeedDetections(activeWeeds);
+        console.log('Fetched weed detections:', data); // Debug log
+        
+        // Filter for pending weeds
+        const pendingWeeds = data.filter(weed => weed.mitigation_status === 'pending');
+        console.log('Pending weeds:', pendingWeeds); // Debug log
+        
+        setWeedDetections(pendingWeeds);
         
         // if we have detections, center the map on the first one
-        if (activeWeeds.length > 0) {
+        if (pendingWeeds.length > 0) {
           setMapSettings({
-            centerPosition: [activeWeeds[0].latitude, activeWeeds[0].longitude],
+            centerPosition: [pendingWeeds[0].latitude, pendingWeeds[0].longitude],
             zoom: 17
           });
         }
         
-        // calculate stats based on active weed detections
-        setTreatmentStats(calculateTreatmentStats(activeWeeds, selectedTreatment));
+        // calculate stats based on pending weed detections
+        setTreatmentStats(calculateTreatmentStats(pendingWeeds, selectedTreatment));
       } catch (err) {
         console.error("Error fetching weed detections:", err);
         setError(err.message);
-        
-        // For development/demo purposes - create mock data if backend is not available
-        const mockData = generateMockData();
-        // Filter out completed weeds from mock data as well
-        const activeMockWeeds = mockData.filter(weed => weed.mitigation_status !== 'completed');
-        setWeedDetections(activeMockWeeds);
-        setTreatmentStats(calculateTreatmentStats(activeMockWeeds, selectedTreatment));
       } finally {
         setLoading(false);
       }
@@ -139,7 +136,6 @@ const TreatmentPlanning = () => {
       <div className="error-container">
         <h2>Error loading weed detection data</h2>
         <p>{error}</p>
-        <p>Using mock data for demonstration</p>
       </div>
     );
   }

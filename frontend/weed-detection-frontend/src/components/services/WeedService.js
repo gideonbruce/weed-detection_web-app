@@ -26,6 +26,7 @@ export const fetchWeedDetections = async () => {
         longitude: baseLng + lngOffset,
         confidence: Math.round(70 + Math.random() * 30),
         timestamp: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
+        mitigation_status: Math.random() > 0.7 ? 'completed' : 'pending' // Add mock mitigation status
       });
     }
     

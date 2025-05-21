@@ -12,6 +12,9 @@ const weedIcon = L.icon({
 });
 
 const TreatmentMap = ({ weedDetections, treatmentAreas, centerPosition, zoom }) => {
+  // Only show weeds with pending status
+  const pendingWeeds = weedDetections.filter(weed => weed.mitigation_status === 'pending');
+
   return (
     <div className="bg-white shadow-lg rounded-lg p-6">
       <h2 className="text-lg font-semibold text-gray-800 mb-4">Treatment Map</h2>
@@ -36,12 +39,13 @@ const TreatmentMap = ({ weedDetections, treatmentAreas, centerPosition, zoom }) 
             </LayersControl.BaseLayer>
           </LayersControl>
 
-          {/* Weed Detections */}
-          {weedDetections.map(weed => (
+          {/* Weed Detections - only show pending weeds */}
+          {pendingWeeds.map(weed => (
             <Marker key={weed.id} position={[weed.latitude, weed.longitude]} icon={weedIcon}>
               <Popup>
                 <h3 className="font-semibold">Weed Detected</h3>
                 <p>Confidence: {weed.confidence}%</p>
+                <p>Status: {weed.mitigation_status}</p>
                 <p>Lat: {weed.latitude.toFixed(6)}</p>
                 <p>Lng: {weed.longitude.toFixed(6)}</p>
               </Popup>

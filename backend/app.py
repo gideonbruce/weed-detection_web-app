@@ -149,7 +149,7 @@ def get_detections():
         db = get_db_connection()
         detections = list(db.weed_detections.find(
             {},
-            {'_id': 0, 'id': 1, 'latitude': 1, 'longitude': 1, 'timestamp': 1}
+            {'_id': 0, 'id': 1, 'latitude': 1, 'longitude': 1, 'timestamp': 1, 'confidence': 1, 'mitigation_status': 1}
         ))
         return jsonify(detections), 200
     
