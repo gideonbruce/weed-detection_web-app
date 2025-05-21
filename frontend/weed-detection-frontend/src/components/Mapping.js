@@ -7,7 +7,6 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet.heat';
 
-
 // Import custom weed icon
 import weedIconImg from './assets/weed-icon.png';
 
@@ -29,7 +28,7 @@ const weedIcon = L.icon({
 
 const WeedDetectionMap = ({ onDetectionsUpdate }) => {
   const [center, setCenter] = useState([0.6651262415651624, 35.2378296522736]);
-  const [zoom, setZoom] = useState(16);
+  const [zoom, setZoom] = useState(20);
   const [detections, setDetections] = useState([]);
   const [droneAltitude, setDroneAltitude] = useState(10); // meters
   const [mapType, setMapType] = useState('street');

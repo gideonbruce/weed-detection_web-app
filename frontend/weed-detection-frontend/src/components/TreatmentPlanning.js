@@ -14,7 +14,7 @@ import {
 } from './services/TreatmentService';
 
 const COORDINATE_PRECISION = 8; // eight decimal places
-const DEFAUL_CENTER = [-0.68885, 34.78321];
+const DEFAUL_CENTER = [0.6651262415651624, 35.2378296522736];
 const DEFAULT_ZOOM = 16;
 
 const TreatmentPlanning = () => {
@@ -26,7 +26,7 @@ const TreatmentPlanning = () => {
   const [treatmentAreas, setTreatmentAreas] = useState([]);
   const [currentTreatmentPlan, setCurrentTreatmentPlan] = useState(null);
   const [mapSettings, setMapSettings] = useState({
-    centerPosition: [-0.68885, 34.78321],
+    centerPosition: [0.6651262415651624, 35.2378296522736],
     zoom: 16
   });
   const [treatmentStats, setTreatmentStats] = useState({
