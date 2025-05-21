@@ -28,7 +28,7 @@ const weedIcon = L.icon({
 });
 
 const WeedDetectionMap = ({ onDetectionsUpdate }) => {
-  const [center, setCenter] = useState([-0.68885, 34.78321]); 
+  const [center, setCenter] = useState([0.6651262415651624, 35.2378296522736]);
   const [zoom, setZoom] = useState(16);
   const [detections, setDetections] = useState([]);
   const [droneAltitude, setDroneAltitude] = useState(10); // meters
