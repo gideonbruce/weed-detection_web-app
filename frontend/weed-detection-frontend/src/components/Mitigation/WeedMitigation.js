@@ -217,9 +217,36 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
 
   const handleStartTreatment = async () => {
     console.log("[DEBUG] handleStartTreatment called");
-    if (!treatmentPlan || (!treatmentPlan._id && !treatmentPlan.id)) {
-      console.error("[ERROR] Cannot start treatment: Invalid treatment plan");
+    console.log("[DEBUG] Current treatment plan:", treatmentPlan);
+    console.log("[DEBUG] Treatment plan properties:", {
+      hasPlan: !!treatmentPlan,
+      hasId: !!(treatmentPlan?._id || treatmentPlan?.id),
+      hasMethod: !!treatmentPlan?.method,
+      hasAreas: !!treatmentPlan?.areas,
+      areasLength: treatmentPlan?.areas?.length
+    });
+
+    if (!treatmentPlan) {
+      console.error("[ERROR] Cannot start treatment: treatmentPlan is null or undefined");
       setError("Cannot start treatment: Invalid treatment plan.");
+      return;
+    }
+
+    if (!treatmentPlan._id && !treatmentPlan.id) {
+      console.error("[ERROR] Cannot start treatment: treatmentPlan has no ID");
+      setError("Cannot start treatment: Treatment plan has no ID.");
+      return;
+    }
+
+    if (!treatmentPlan.method) {
+      console.error("[ERROR] Cannot start treatment: treatmentPlan has no method");
+      setError("Cannot start treatment: Treatment plan has no method specified.");
+      return;
+    }
+
+    if (!treatmentPlan.areas || !Array.isArray(treatmentPlan.areas) || treatmentPlan.areas.length === 0) {
+      console.error("[ERROR] Cannot start treatment: treatmentPlan has no valid areas");
+      setError("Cannot start treatment: Treatment plan has no valid areas.");
       return;
     }
 
@@ -246,7 +273,7 @@ const WeedMitigation = ({ treatmentPlanProp, planIdProp }) => {
         });
       }, 1000);
       
-      console.log("[DEBUG] Sending treatment command");
+      console.log("[DEBUG] Sending treatment command with plan:", treatmentPlan);
       const result = await sendTreatmentCommand(treatmentPlan);
       
       clearInterval(progressInterval);
