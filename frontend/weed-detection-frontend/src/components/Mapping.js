@@ -32,6 +32,7 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
   const [zoom, setZoom] = useState(16);
   const [detections, setDetections] = useState([]);
   const [droneAltitude, setDroneAltitude] = useState(10); // meters
+  const [mapType, setMapType] = useState('street');
   const [weather, setWeather] = useState({
     temperature: 0,
     humidity: 0,
@@ -451,6 +452,13 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
             </button>
 
             <button
+              onClick={() => setMapType(mapType === 'street' ? 'satellite' : 'street')}
+              className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700"
+            >
+              {mapType === 'street' ? 'Satellite View' : 'Street View'}
+            </button>
+
+            <button
               onClick={exportDetectionsToJSON}
               disabled={detections.length === 0}
               className={`px-2 py-1 text-xs rounded text-white ${
@@ -470,10 +478,17 @@ const WeedDetectionMap = ({ onDetectionsUpdate }) => {
         style={{ height: "70vh", width: "100%" }}
         whenCreated={mapInstance => { mapRef.current = mapInstance }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {mapType === 'street' ? (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        ) : (
+          <TileLayer
+            attribution='&copy; <a href="https://www.google.com/maps">Google Maps</a>'
+            url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+          />
+        )}
         <FeatureGroup>
           <EditControl
             position="topright"

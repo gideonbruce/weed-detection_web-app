@@ -24,7 +24,7 @@ app.config["SECRET_KEY"] = "dcdrdtrcsewdcx"
 # MongoDB connection
 def get_db_connection():
     client = MongoClient("mongodb://localhost:27017")
-    return client.weed_detection_db  # Using a database named weed_detection_db
+    return client.weed_detection_db 
 
 @app.route('/login', methods=['POST'])
 def login():
