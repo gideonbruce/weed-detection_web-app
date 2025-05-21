@@ -44,26 +44,30 @@ const TreatmentPlanning = () => {
       try {
         setLoading(true);
         const data = await fetchWeedDetections();
-        setWeedDetections(data);
+        // Filter out completed weeds
+        const activeWeeds = data.filter(weed => weed.mitigation_status !== 'completed');
+        setWeedDetections(activeWeeds);
         
         // if we have detections, center the map on the first one
-        if (data.length > 0) {
+        if (activeWeeds.length > 0) {
           setMapSettings({
-            centerPosition: [data[0].latitude, data[0].longitude],
+            centerPosition: [activeWeeds[0].latitude, activeWeeds[0].longitude],
             zoom: 17
           });
         }
         
-        // calculate stats based on weed detections
-        setTreatmentStats(calculateTreatmentStats(data, selectedTreatment));
+        // calculate stats based on active weed detections
+        setTreatmentStats(calculateTreatmentStats(activeWeeds, selectedTreatment));
       } catch (err) {
         console.error("Error fetching weed detections:", err);
         setError(err.message);
         
         // For development/demo purposes - create mock data if backend is not available
         const mockData = generateMockData();
-        setWeedDetections(mockData);
-        setTreatmentStats(calculateTreatmentStats(mockData, selectedTreatment));
+        // Filter out completed weeds from mock data as well
+        const activeMockWeeds = mockData.filter(weed => weed.mitigation_status !== 'completed');
+        setWeedDetections(activeMockWeeds);
+        setTreatmentStats(calculateTreatmentStats(activeMockWeeds, selectedTreatment));
       } finally {
         setLoading(false);
       }
