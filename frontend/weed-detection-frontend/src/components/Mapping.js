@@ -21,9 +21,9 @@ L.Icon.Default.mergeOptions({
 // Custom weed icon
 const weedIcon = L.icon({
   iconUrl: weedIconImg,
-  iconSize: [16, 16],
-  iconAnchor: [16, 32],
-  popupAnchor: [0, -32],
+  iconSize: [10, 10],
+  iconAnchor: [12, 24],
+  popupAnchor: [0, -24],
 });
 
 const WeedDetectionMap = ({ onDetectionsUpdate }) => {

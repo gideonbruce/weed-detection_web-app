@@ -6,7 +6,7 @@ import 'leaflet/dist/leaflet.css';
 // weed icon
 const weedIcon = L.icon({
   iconUrl: "/assets/weed-icon.png",
-  iconSize: [16, 16],
+  iconSize: [10, 10],
   iconAnchor: [12, 24],
   popupAnchor: [0, -24],
 });
